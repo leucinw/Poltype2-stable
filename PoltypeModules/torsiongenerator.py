@@ -641,7 +641,6 @@ def gen_torcomfile (poltype,comfname,numproc,maxmem,maxdisk,prevstruct,xyzf):
             operationstr = "%s %s/%s MaxDisk=%s\n" % (optstr,poltype.toroptmethod,poltype.toroptbasisset, maxdisk)
         commentstr = poltype.molecprefix + " Rotatable Bond Optimization on " + gethostname()
     else:
-#        operationstr = "#m06L/%s SP SCF=(qc,maxcycle=800) Guess=Indo MaxDisk=%s\n" % (torspbasisset, maxdisk)
         if poltype.torsppcm==True:
             operationstr = "#P %s/%s SP SCF=(qc,maxcycle=800) Guess=Indo MaxDisk=%s SCRF=(PCM) Pop=NBORead\n" % (poltype.torspmethod,poltype.torspbasisset, maxdisk)
         else:       
@@ -802,7 +801,7 @@ def CreatePsi4TorESPInputFile(poltype,finalstruct,torxyzfname,optmol,molecprefix
     temp.write('}'+'\n')
     if poltype.torsppcm==True:
         temp.write('set {'+'\n')
-        temp.write(' basis '+poltype.espbasisset+'\n')
+        temp.write(' basis '+poltype.torspbasisset+'\n')
         temp.write(' e_convergence 10 '+'\n')
         temp.write(' d_convergence 10 '+'\n')
         temp.write(' scf_type pk'+'\n')
