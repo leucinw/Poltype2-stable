@@ -127,8 +127,6 @@ def compute_qm_tor_energy(poltype,a,b,c,d,startangle,phase_list = None):
                     if "SCF Done: " in line:
                         mengi = line.split()[4]
                         tor_energy = float(mengi) * poltype.Hartree2kcal_mol
-                    else:
-                        print("Cannot find QM energy value from output!")
         energy_list.append(tor_energy)
         angle_list.append(angle)
         energy_dict[angle] = tor_energy
