@@ -2,6 +2,7 @@ import os
 
 def CallExternalAPI(poltype,listofcommands,scriptname,scratchdir):
     poltype.WriteToLog('Calling external API ')
+    njobs = poltype.tordatapointsnum
     shellname=scriptname+'.sh'
     temp=open(shellname,'w')
     temp.write('source '+poltype.bashrcpath+'\n')
@@ -9,7 +10,7 @@ def CallExternalAPI(poltype,listofcommands,scriptname,scratchdir):
         temp.write(cmd+'\n')
     temp.close()
     os.system('chmod +x '+shellname)
-    cmdstr='python'+' '+poltype.externalapi+' '+poltype.bashrcpath+' '+os.getcwd()+' '+scratchdir+' '+shellname
+    cmdstr='python'+' '+poltype.externalapi+' '+poltype.bashrcpath+' '+os.getcwd()+' '+scratchdir+' '+shellname+' '+njobs
     os.system(cmdstr)
 
 
