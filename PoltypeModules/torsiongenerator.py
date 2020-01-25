@@ -781,6 +781,7 @@ def write_arr_to_file(poltype,fname, array_list):
         for ele in cols:
             outfh.write("%10.4f" % ele)
         outfh.write("\n")
+    outfh.close()
 
 def CreatePsi4TorESPInputFile(poltype,finalstruct,torxyzfname,optmol,molecprefix,a,b,c,d,torang,phaseangle,makecube=None):
     inputname= '%s-sp-%d-%d-%d-%d-%03d_psi4.dat' % (molecprefix,a,b,c,d,round((torang+phaseangle)%360))
