@@ -697,7 +697,7 @@ def fit_rot_bond_tors(poltype,mol,cls_mm_engy_dict,cls_qm_engy_dict,cls_angle_di
             # msg : string giving cause of failure if one exists
             # ier : an int. if ier is 1,2,3 or 4, a solution was found, else no solution was found
             #p1,covx,idict,msg,ier = optimize.leastsq(errfunc, pzero, args=(rads(numpy.array(angle_list)),torprmdict, tor_energy_list), full_output = True)
-            array=optimize.least_squares(errfunc, pzero, jac='2-point', bounds=(-max_amp, max_amp), args=(torgen.rads(poltype,numpy.array(angle_list)),torprmdict, tor_energy_list))
+            array=optimize.least_squares(errfunc, pzero, jac='3-point', bounds=(-max_amp, max_amp), args=(torgen.rads(poltype,numpy.array(angle_list)),torprmdict, tor_energy_list))
             p1=array['x']
 
             # Remove parameters found by least.sq that aren't reasonable; 
@@ -778,7 +778,8 @@ def fit_rot_bond_tors(poltype,mol,cls_mm_engy_dict,cls_qm_engy_dict,cls_angle_di
         if float(minRMSD)>poltype.maxtorRMSPD:
                 poltype.WriteToLog('RMSPD of QM and MM torsion profiles is high, RMSPD = '+ str(minRMSD)+' Tolerance is '+str(poltype.maxtorRMSPD)+' kcal/mol ')
 
-                raise ValueError('RMSPD of QM and MM torsion profile is high, RMSPD = ',str(minRMSD))
+                #raise ValueError('RMSPD of QM and MM torsion profile is high, RMSPD = ',str(minRMSD))
+                print('RMSPD of QM and MM torsion profile is high, RMSPD = ' + str(minRMSD))
 
     return write_prm_dict,fitfunc_dict
 
