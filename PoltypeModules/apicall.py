@@ -10,7 +10,7 @@ def CallExternalAPI(poltype,listofcommands,scriptname,scratchdir):
         temp.write(cmd+'\n')
     temp.close()
     os.system('chmod +x '+shellname)
-    cmdstr='python'+' '+poltype.externalapi+' '+poltype.bashrcpath+' '+os.getcwd()+' '+scratchdir+' '+shellname+' '+njobs
+    cmdstr='python'+' '+poltype.externalapi+' '+poltype.bashrcpath+' '+os.getcwd()+' '+scratchdir+' '+shellname+' '+ str(njobs)
     os.system(cmdstr)
 
 

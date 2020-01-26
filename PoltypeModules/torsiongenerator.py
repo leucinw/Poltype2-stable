@@ -115,7 +115,7 @@ def WaitForTermination(poltype,outputlogs):
 def CreateGausTorOPTInputFile(poltype,molecprefix,a,b,c,d,phaseangle,torang,optmol,torxyzfname,consttorlist):
     toroptcomfname = '%s-opt-%d-%d-%d-%d-%03d.com' % (molecprefix,a,b,c,d,round((torang+phaseangle)%360))
     strctfname = os.path.splitext(toroptcomfname)[0] + '.log'
-    gen_torcomfile(poltype,toroptcomfname,poltype.numproc,poltype.maxmemtor,poltype.maxdisk,optmol,torxyzfname) # prevstruct is just used for Atomic Num and charge,torxyzfname is used for xyz coordinates
+    gen_torcomfile(poltype,toroptcomfname,poltype.numproc,poltype.torsmem,poltype.maxdisk,optmol,torxyzfname) # prevstruct is just used for Atomic Num and charge,torxyzfname is used for xyz coordinates
     # Append restraints to *opt*.com file
     tmpfh = open(toroptcomfname, "a")
     # Fix all torsions around the rotatable bond b-c 
@@ -158,7 +158,7 @@ def GenerateTorsionSPInputFileGaus(poltype,torxyzfname,molecprefix,a,b,c,d,toran
     prevstruct = opt.load_structfile(poltype,prevstrctfname)
     torspcomfname = '%s-sp-%d-%d-%d-%d-%03d.com' % (molecprefix,a,b,c,d,round((torang+phaseangle)%360))
     torsplogfname = os.path.splitext(torspcomfname)[0] + '.log'
-    gen_torcomfile(poltype,torspcomfname,poltype.numproc,poltype.maxmemtor,poltype.maxdisk,prevstruct,torxyzfname)
+    gen_torcomfile(poltype,torspcomfname,poltype.numproc,poltype.torsmem,poltype.maxdisk,prevstruct,torxyzfname)
     outputname=torspcomfname.replace('.com','.log')
     return torspcomfname,outputname
 
@@ -604,7 +604,7 @@ def CreatePsi4TorOPTInputFile(poltype,molecprefix,a,b,c,d,phaseangle,torang,optm
 
 
 
-    temp.write('memory '+poltype.maxmemtor+'\n')
+    temp.write('memory '+poltype.torsmem+'\n')
     temp.write('set_num_threads(%s)'%(poltype.numproc)+'\n')
     temp.write('psi4_io.set_default_path("%s")'%(poltype.scratchdir)+'\n')   
     temp.write("optimize('%s/%s')" % (poltype.toroptmethod.lower(),poltype.toroptbasisset)+'\n')
@@ -613,13 +613,13 @@ def CreatePsi4TorOPTInputFile(poltype,molecprefix,a,b,c,d,phaseangle,torang,optm
     outputname=inputname.replace('.dat','.log')
     return inputname,outputname
 
-def gen_torcomfile (poltype,comfname,numproc,maxmemtor,maxdisk,prevstruct,xyzf):
+def gen_torcomfile (poltype,comfname,numproc,torsmem,maxdisk,prevstruct,xyzf):
     """
     Intent: Create *.com file for qm torsion calculations 
     Input:
         comfname: com file name
         numproc: number of processors
-        maxmemtor: max memory size
+        torsmem: max memory size
         prevstruct: OBMol object
         xyzf: xyzfile with information to create *.com file
     Output:
@@ -627,18 +627,19 @@ def gen_torcomfile (poltype,comfname,numproc,maxmemtor,maxdisk,prevstruct,xyzf):
     Referenced By: tor_opt_sp 
     Description: -
     """
-    opt.write_com_header(poltype,comfname,os.path.splitext(comfname)[0] + ".chk",maxdisk,maxmemtor,numproc)
+    opt.write_com_header(poltype,comfname,os.path.splitext(comfname)[0] + ".chk",maxdisk,torsmem,numproc)
     tmpfh = open(comfname, "a")
 
     optimizeoptlist = [poltype.gausoptcoords]
     optimizeoptlist.append("maxcycle=400")
+    optimizeoptlist.append("calcAll")
     optstr=opt.gen_opt_str(poltype,optimizeoptlist)
 
     if ('-opt-' in comfname):
         if poltype.toroptpcm==True:
-            operationstr = "%s %s/%s MaxDisk=%s SCRF=(PCM)\n" % (optstr,poltype.toroptmethod,poltype.toroptbasisset, maxdisk)
+            operationstr = "%s %s/%s MaxDisk=%s IOP(5/13=1) SCRF=(PCM)\n" % (optstr,poltype.toroptmethod,poltype.toroptbasisset, maxdisk)
         else:
-            operationstr = "%s %s/%s MaxDisk=%s\n" % (optstr,poltype.toroptmethod,poltype.toroptbasisset, maxdisk)
+            operationstr = "%s %s/%s MaxDisk=%s IOP(5/13=1) Guess=INDO\n" % (optstr,poltype.toroptmethod,poltype.toroptbasisset, maxdisk)
         commentstr = poltype.molecprefix + " Rotatable Bond Optimization on " + gethostname()
     else:
         if poltype.torsppcm==True:
@@ -823,7 +824,7 @@ def CreatePsi4TorESPInputFile(poltype,finalstruct,torxyzfname,optmol,molecprefix
         temp.write(' Mode = Implicit'+'\n')
         temp.write(' }'+'\n')
         temp.write('}'+'\n')
-    temp.write('memory '+poltype.maxmemtor+'\n')
+    temp.write('memory '+poltype.torsmem+'\n')
     temp.write('set_num_threads(%s)'%(poltype.numproc)+'\n')
     temp.write('psi4_io.set_default_path("%s")'%(poltype.scratchdir)+'\n')
     temp.write('set freeze_core True'+'\n')
