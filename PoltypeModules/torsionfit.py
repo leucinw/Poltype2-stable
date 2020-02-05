@@ -192,7 +192,7 @@ def compute_mm_tor_energy(poltype,mol,a,b,c,d,startangle,designatexyz,torang,pha
         errstr = [string, energy_list,angle_list]
 
     rows = zip(*[angle_list, energy_list, torse_list])
-    rows=sorted(rows)
+    rows = sorted(rows)
     rows0=list([i[0] for i in rows])
     rows1=list([i[1] for i in rows])
     rows2=list([i[2] for i in rows])
@@ -802,7 +802,7 @@ def write_key_file(poltype,write_prm_dict,tmpkey1basename,tmpkey2basename):
 #            if clskey in write_prm_dict and \
 #               torvals == [0.]*len(torvals):
             if clskey in write_prm_dict:
-                torline = ' torsion %7s %4s %4s %4s   ' % (cl[0],cl[1],cl[2],cl[3])
+                torline = 'torsion %7s %4s %4s %4s   ' % (cl[0],cl[1],cl[2],cl[3])
                 print(write_prm_dict[clskey])
                 for (nfold, prm) in write_prm_dict[clskey].items():
                     torline += ' %7.3f %.1f %d' % (prm,poltype.foldoffsetlist[nfold - 1], nfold)
@@ -812,7 +812,7 @@ def write_key_file(poltype,write_prm_dict,tmpkey1basename,tmpkey2basename):
     tmpfh2.close()
 
 def eval_rot_bond_parms(poltype,mol,fitfunc_dict,tmpkey1basename,tmpkey2basename):
-    """
+    ''' 
     Intent: 
     For each torsion whose parameters were fit for:
         Using the new parameters, find the new MM Energy vs. Dihedral Angle Profile
@@ -833,7 +833,7 @@ def eval_rot_bond_parms(poltype,mol,fitfunc_dict,tmpkey1basename,tmpkey2basename
     1. For each torsion whose parameters have been fit for (for each tor in torlist):
         a. Get each energy profile (MM pre, MM post, QM)
         b. Plot the profiles
-    """
+    '''
     # for each main torsion
     for tor in poltype.torlist:
         a,b,c,d = tor[0:4]
@@ -863,7 +863,6 @@ def eval_rot_bond_parms(poltype,mol,fitfunc_dict,tmpkey1basename,tmpkey2basename
         mm2_energy_list,m2ang_list,tor_e_list2 = compute_mm_tor_energy(poltype,mol,a,b,c,d,torang,'_postQMOPTpostfit',torang,anglelist,tmpkey2basename)
         # remove angles for which energy was unable to be found
         del_ang_list = find_del_list(poltype,mm_energy_list,mang_list)
-
         (mang_list,mm_energy_list,m2ang_list,mm2_energy_list,qm_energy_list,qang_list,tor_e_list,tor_e_list2)=prune_mme_error(poltype,del_ang_list,mang_list,mm_energy_list,m2ang_list,mm2_energy_list,qm_energy_list,qang_list,tor_e_list,tor_e_list2)
         del_ang_list = find_del_list(poltype,qm_energy_list,qang_list)
         (mang_list,mm_energy_list,m2ang_list,mm2_energy_list,qm_energy_list,qang_list,tor_e_list,tor_e_list2)=prune_qme_error(poltype,del_ang_list,mang_list,mm_energy_list,m2ang_list,mm2_energy_list,qm_energy_list,qang_list,tor_e_list,tor_e_list2)

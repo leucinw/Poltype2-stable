@@ -7,6 +7,7 @@ from socket import gethostname
 import re
 import shutil
 import time
+import numpy as np
 
 def gen_esp_grid(poltype,mol):
     """
@@ -75,43 +76,23 @@ def CreatePsi4ESPInputFile(poltype,comfilecoords,comfilename,mol,maxdisk,maxmem,
     inputname=comfilename.replace('.com','_psi4.dat')
     temp=open(inputname,'w')
     temp.write('molecule { '+'\n')
-    temp.write('%d %d\n' % (mol.GetTotalCharge(), 1))
+    temp.write('%d %d\n' % (poltype.totalcharge, 1))
     for lineidx in range(len(results)):
         line=results[lineidx]
         linesplit=line.split()
         if len(linesplit)==4 and '#' not in line:
             temp.write(line)
     temp.write('}'+'\n')
-    if poltype.torsppcm==True:
-        temp.write('set {'+'\n')
-        temp.write(' basis '+poltype.espbasisset+'\n')
-        temp.write(' e_convergence 10 '+'\n')
-        temp.write(' d_convergence 10 '+'\n')
-        temp.write(' scf_type pk'+'\n')
-        temp.write(' pcm true'+'\n')
-        temp.write('  pcm_scf_type total '+'\n')
-        temp.write('}'+'\n')
-        temp.write('pcm = {'+'\n')
-        temp.write(' Units = Angstrom'+'\n')
-        temp.write(' Medium {'+'\n')
-        temp.write(' SolverType = IEFPCM'+'\n')
-        temp.write(' Solvent = Water'+'\n')
-        temp.write(' }'+'\n')
-        temp.write(' Cavity {'+'\n')
-        temp.write(' RadiiSet = UFF'+'\n')
-        temp.write(' Type = GePol'+'\n')
-        temp.write(' Scaling = False'+'\n')
-        temp.write(' Area = 0.3'+'\n')
-        temp.write(' Mode = Implicit'+'\n')
-        temp.write(' }'+'\n')
-        temp.write('}'+'\n')
     temp.write('memory '+maxmem+'\n')
     temp.write('set_num_threads(%s)'%(numproc)+'\n')
     temp.write('psi4_io.set_default_path("%s")'%(poltype.scratchdir)+'\n')
     temp.write('set freeze_core True'+'\n')
     temp.write("E, wfn = energy('%s/%s',return_wfn=True)" % (poltype.espmethod.lower(),poltype.espbasisset)+'\n')
     if makecube==True:
-       temp.write('oeprop(wfn,"DIPOLE","GRID_ESP")'+'\n')
+       temp.write('oeprop(wfn,"DIPOLE","QUADRUPOLE","GRID_ESP","WIBERG_LOWDIN_INDICES")'+'\n')
+    else:
+       temp.write('oeprop(wfn,"DIPOLE","QUADRUPOLE","WIBERG_LOWDIN_INDICES")'+'\n')
+
     temp.write('clean()'+'\n')
     temp.close()
     outputname=os.path.splitext(inputname)[0] + '.log'
@@ -124,36 +105,13 @@ def CreatePsi4DMAInputFile(poltype,comfilecoords,comfilename,mol):
     inputname=comfilename.replace('.com','_psi4.dat')
     temp=open(inputname,'w')
     temp.write('molecule { '+'\n')
-    temp.write('%d %d\n' % (mol.GetTotalCharge(), 1))
+    temp.write('%d %d\n' % (poltype.totalcharge, 1))
     for lineidx in range(len(results)):
         line=results[lineidx]
         linesplit=line.split()
         if len(linesplit)==4 and '#' not in line:
             temp.write(line)
     temp.write('}'+'\n')
-    if poltype.torsppcm==True:
-        temp.write('set {'+'\n')
-        temp.write(' basis '+poltype.dmabasisset+'\n')
-        temp.write(' e_convergence 10 '+'\n')
-        temp.write(' d_convergence 10 '+'\n')
-        temp.write(' scf_type pk'+'\n')
-        temp.write(' pcm true'+'\n')
-        temp.write('  pcm_scf_type total '+'\n')
-        temp.write('}'+'\n')
-        temp.write('pcm = {'+'\n')
-        temp.write(' Units = Angstrom'+'\n')
-        temp.write(' Medium {'+'\n')
-        temp.write(' SolverType = IEFPCM'+'\n')
-        temp.write(' Solvent = Water'+'\n')
-        temp.write(' }'+'\n')
-        temp.write(' Cavity {'+'\n')
-        temp.write(' RadiiSet = UFF'+'\n')
-        temp.write(' Type = GePol'+'\n')
-        temp.write(' Scaling = False'+'\n')
-        temp.write(' Area = 0.3'+'\n')
-        temp.write(' Mode = Implicit'+'\n')
-        temp.write(' }'+'\n')
-        temp.write('}'+'\n')
     temp.write('memory '+poltype.maxmem+'\n')
     temp.write('set_num_threads(%s)'%(poltype.numproc)+'\n')
     temp.write('psi4_io.set_default_path("%s")'%(poltype.scratchdir)+'\n')
@@ -166,6 +124,7 @@ def CreatePsi4DMAInputFile(poltype,comfilecoords,comfilename,mol):
     return inputname
 
 def GrabFinalPsi4Energy(poltype,logname):
+    energy=None
     temp=open(logname,'r')
     results=temp.readlines()
     temp.close()
@@ -181,15 +140,20 @@ def GrabFinalPsi4Energy(poltype,logname):
     return energy
             
 def CheckRMSPD(poltype):
-    temp=open('RMSPD.txt','r')
-    for line in temp.readlines():
-        if 'Root Mean Square Potential Difference :' in line:
-            RMSPD=line.split(':')[1].strip()
-    temp.close()
-    if float(RMSPD)>poltype.maxRMSPD:
-        poltype.WriteToLog('Warning: RMSPD of QM and MM optimized structures is high, RMSPD = '+ RMSPD+' Tolerance is '+str(poltype.maxRMSPD)+' kcal/mol ')
-        
-        raise ValueError('Warning: RMSPD of QM and MM optimized structures is high, RMSPD = ',RMSPD)
+    rmspdexists=False
+    if os.path.isfile('RMSPD.txt'):
+        temp=open('RMSPD.txt','r')
+        for line in temp.readlines():
+            if 'Root Mean Square Potential Difference :' in line:
+                RMSPD=line.split(':')[1].strip()
+                rmspdexists=True
+        temp.close()
+        if rmspdexists==True:
+            if float(RMSPD)>poltype.maxRMSPD:
+                poltype.WriteToLog('Warning: RMSPD of QM and MM optimized structures is high, RMSPD = '+ RMSPD+' Tolerance is '+str(poltype.maxRMSPD)+' kcal/mol ')
+            
+                raise ValueError('Warning: RMSPD of QM and MM optimized structures is high, RMSPD = ',RMSPD)
+    return rmspdexists
 
 def gen_comfile(poltype,comfname,numproc,maxmem,maxdisk,chkname,tailfname,mol):
     """
@@ -248,20 +212,24 @@ def gen_comfile(poltype,comfname,numproc,maxmem,maxdisk,chkname,tailfname,mol):
     os.system(cmdstr)
     cmdstr='rm '+'tmp2.txt'
     os.system(cmdstr)
-  
+    tmpfh = open(comfname, "a")
+    tmpfh.write('\n')
+    tmpfh.write('$nbo bndidx $end'+'\n')
+    tmpfh.write('\n')
+    tmpfh.close()
 
 def ElectrostaticPotentialFitting(poltype):
     optmpolecmd = poltype.potentialexe + " 6 " + poltype.xyzoutfile + " -k " + poltype.key2fname + " " + poltype.qmesp2fname + " N 0.1"
     poltype.call_subsystem(optmpolecmd,True)
 
 def ElectrostaticPotentialComparison(poltype):
-    poltype.WriteToLog("")
-    poltype.WriteToLog("=========================================================")
-    poltype.WriteToLog("Electrostatic Potential Comparision\n")
-    if not os.path.isfile('RMSPD.txt'):
+    rmspdexists=CheckRMSPD(poltype)
+    if rmspdexists==False:
+        poltype.WriteToLog("")
+        poltype.WriteToLog("=========================================================")
+        poltype.WriteToLog("Electrostatic Potential Comparison\n")
         cmd=poltype.potentialexe + ' 5 ' + poltype.xyzoutfile + ' ' + '-k'+' '+ poltype.key3fname+' '+ poltype.qmesp2fname + ' N > RMSPD.txt'
         poltype.call_subsystem(cmd,True)
-    CheckRMSPD(poltype)
 
 
 def SPForDMA(poltype,optmol,mol):
@@ -276,6 +244,10 @@ def SPForDMA(poltype,optmol,mol):
         if term==False:
             cmdstr='psi4 '+inputname+' '+poltype.logdmafname
             poltype.call_subsystem(cmdstr,True)
+            term,error=is_qm_normal_termination(poltype,poltype.logdmafname)
+            if error:
+                poltype.RaiseOutputFileError(poltype.logdmafname) 
+
         
     else:
         term,error=is_qm_normal_termination(poltype,poltype.logdmafname)
@@ -287,6 +259,10 @@ def SPForDMA(poltype,optmol,mol):
             poltype.call_subsystem(cmdstr,True)
             cmdstr = poltype.formchkexe + " " + poltype.chkdmafname
             poltype.call_subsystem(cmdstr,True)
+            term,error=is_qm_normal_termination(poltype,poltype.logdmafname)
+            if error:
+                poltype.RaiseOutputFileError(poltype.logdmafname) 
+
 
 def SPForESP(poltype,optmol,mol):
     if not os.path.isfile(poltype.espgrdfname):
@@ -300,6 +276,10 @@ def SPForESP(poltype,optmol,mol):
             poltype.WriteToLog("Calling: " + "Psi4 Gradient for ESP")
             cmdstr='psi4 '+inputname+' '+outputname
             poltype.call_subsystem(cmdstr,True)
+            term,error=is_qm_normal_termination(poltype,outputname)
+            if error:
+                poltype.RaiseOutputFileError(outputname) 
+
 
     else:
         term,error=is_qm_normal_termination(poltype,poltype.logespfname)
@@ -311,6 +291,9 @@ def SPForESP(poltype,optmol,mol):
             poltype.call_subsystem(cmdstr,True)
             cmdstr = poltype.formchkexe + " " + poltype.chkespfname
             poltype.call_subsystem(cmdstr,True)
+            term,error=is_qm_normal_termination(poltype,poltype.logespfname)
+            if error:
+                poltype.RaiseOutputFileError(poltype.logespfname)
 
 def is_qm_normal_termination(poltype,logfname): # needs to handle error checking now
     """
@@ -366,7 +349,7 @@ def CheckDipoleMoments(poltype):
     poltype.WriteToLog("")
     poltype.WriteToLog("=========================================================")
     poltype.WriteToLog("MM Dipole moment\n")
-    cmd=poltype.analyzeexe + ' ' +  poltype.xyzoutfile + ' em | grep -A11 Charge'+'>'+'MMDipole.txt'
+    cmd=poltype.analyzeexe + ' ' +  poltype.xyzoutfile+' '+'-k'+' '+poltype.tmpkeyfile + ' em | grep -A11 Charge'+'>'+'MMDipole.txt'
     poltype.call_subsystem(cmd,True)
     temp=open('MMDipole.txt','r')
     results=temp.readlines()
@@ -377,7 +360,8 @@ def CheckDipoleMoments(poltype):
             mmdipole=float(linesplit[-2])
     poltype.WriteToLog('MM Dipole moment = '+str(mmdipole))
     diff=qmdipole-mmdipole
-    if diff>poltype.dipoletol:
-        raise ValueError('Difference of '+str(diff)+' for QMDipole '+str(qmdipole)+' and '+str(mmdipole)+' for MMDipole '+'is bigger than '+str(poltype.dipoletol)) 
+    ratio=np.abs(diff/qmdipole)
+    if ratio>poltype.dipoletol:
+        raise ValueError('Relative error of '+str(ratio)+' for QMDipole '+str(qmdipole)+' and '+str(mmdipole)+' for MMDipole '+'is bigger than '+str(poltype.dipoletol)) 
 
 

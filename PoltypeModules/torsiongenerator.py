@@ -176,12 +176,19 @@ def tinker_minimize_angles(poltype,molecprefix,a,b,c,d,optmol,consttorlist,phase
         obConversion.SetInFormat('mol')
         obConversion.SetOutFormat('mol2')
         obConversion.WriteFile(prevstruct, 'temp.mol2')
-        rdmol=MolFromMol2File('temp.mol2',False,False)   
+        try:
+            rdmol=MolFromMol2File('temp.mol2',False,False)   
+        except:
+            rdmol=MolFromMol2File('temp.mol2',True,False)
         conf = rdmol.GetConformer()
         dihedral = optmol.GetTorsion(a,b,c,d)
         newdihedral=round((dihedral+phaseangle)%360)
         rdmt.SetDihedralDeg(conf, a-1, b-1, c-1, d-1, newdihedral)
-        print(Chem.MolToMolBlock(rdmol),file=open('tempout.mol','w+'))
+        try:
+            print(Chem.MolToMolBlock(rdmol,kekulize=True),file=open('tempout.mol','w+'))
+        except:
+            print(Chem.MolToMolBlock(rdmol,kekulize=False),file=open('tempout.mol','w+'))
+
         obConversion.ReadFile(prevstruct, 'tempout.mol')
         prevstrctfname,torxyzfname,newtorxyzfname,keyfname=tinker_minimize(poltype,molecprefix,a,b,c,d,optmol,consttorlist,phaseangle,torsionrestraint,prevstruct,torang,'_preQMOPTprefit',poltype.key4fname,'../')
         tinkerstructnamelist.append(newtorxyzfname)
