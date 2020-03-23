@@ -20,7 +20,48 @@
 * Previously it was assumed if optimization log file exists, then the rest of quantum (SP) finished as well. This assumption has been removed
 * function for generating SP for torsion was referecing espmethod and espbasisset instead of torspmethod and torspbasisset
 
-2.0.5 (not current version for future)
+2.0.5
+* If RMSPD.txt already existed then this file was not recreated, this is an isssue if the first time created, tinker crashed. This assumption has been removed.
+
+2.0.6
 * Now when Tinker version number is not correct a ValueError will be raised
 * Now if an external command (for example calling Gaussian, Psi4 etc..) fails, poltype will crash with an error instead of attempting to continue
 * Changing default optmethod and toropmethod to wB97X-D
+* fragmenter not working yet, add dontfrag to poltype.ini files, need to push updates though to keep poltype.py consistent with other changes
+
+2.0.7
+* Default SP for torsion is set back to MP2 for accuracy
+
+2.0.8
+* Fragmenter turned off by default
+* anglep not assigned unless middle atom is connected to three atoms to be consistent with TINKER
+* Using relative error for QM and MM Dipole comparison since the MMDipole scales worse for larger molecules
+* Fix bug related to making QM logs blank files and skipping them
+
+2.0.9
+* If bond is a ring bond or at least one atom in a bond is a ring atom, cannot spin dihedral angle according to rdkit, so just transfer from database
+* Bug fix with charged molecules, solvate GK was turned on during ESP fitting, this is turned on only during torsion fitting
+
+2.1.0
+* If running torsion serially on local host instead of crashing poltype when Gaussian/Psi4 job fails, just continue and attempt to do torsion fitting without that data point
+
+2.1.1
+* Added TARGET-DIPOLE dipole from ESP QM data to better reproduce MM QM dipole agreement. Gaussian uses center of nuclear charge frame which we convert to center of mass coordinates (Tinker is in COM Frame). Psi4 default is COM frame.
+
+2.1.2
+* Bug fix for TARGET-DIPOLE keyword being used before ESP QM generated
+
+2.1.3
+* Added SOLUTE keyword for GK and DD-COSMO eletrostatic radii
+
+2.1.4
+* Check RMSPD root mean square potential difference and raise error before checking dipoles, (previously supposed to do this but there was a bug)
+
+2.1.5
+* When extracting dipole from gaussian dipole is flipped in wrong direction, this is fixed
+
+2.1.6
+* Error with generating opt.com file for modifiedresidue library with first poltype run, this has been fixed. Now when poltype finishes,ttt.xyz_2 is deleted so if rerunning ttt.xyz_3 ... isnt created, also *.chk files are deleted if job is successful.
+
+2.1.7
+* Torsion parameters are transfered from database if not in rotatable bond list(bug fix from previous edits of rotatable bond definition and transferable torsion in database)

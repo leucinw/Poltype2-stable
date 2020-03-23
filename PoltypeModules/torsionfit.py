@@ -112,16 +112,21 @@ def compute_qm_tor_energy(poltype,a,b,c,d,startangle,phase_list = None):
     for phaseangle in phase_list:
         angle = (startangle + phaseangle) % 360
         if poltype.use_gaus:
+
             minstrctfname = '%s-sp-%d-%d-%d-%d-%03d.log' % (poltype.molecprefix,a,b,c,d,round(angle))
         else:
             minstrctfname = '%s-sp-%d-%d-%d-%d-%03d_psi4.log' % (poltype.molecprefix,a,b,c,d,round(angle))
+
         if not os.path.exists(minstrctfname): # if optimization failed then SP file will not exist
             tor_energy=None
         else:
             tor_energy = None
             if not poltype.use_gaus:
                 mengi=esp.GrabFinalPsi4Energy(poltype,minstrctfname)
-                tor_energy = float(mengi) * poltype.Hartree2kcal_mol
+                if mengi==None:
+                    tor_energy=None
+                else:
+                    tor_energy = float(mengi) * poltype.Hartree2kcal_mol
             else:
                 for line in open(minstrctfname).readlines():
                     if "SCF Done: " in line:
@@ -192,7 +197,7 @@ def compute_mm_tor_energy(poltype,mol,a,b,c,d,startangle,designatexyz,torang,pha
         errstr = [string, energy_list,angle_list]
 
     rows = zip(*[angle_list, energy_list, torse_list])
-    rows = sorted(rows)
+    rows=sorted(rows)
     rows0=list([i[0] for i in rows])
     rows1=list([i[1] for i in rows])
     rows2=list([i[2] for i in rows])
@@ -697,7 +702,7 @@ def fit_rot_bond_tors(poltype,mol,cls_mm_engy_dict,cls_qm_engy_dict,cls_angle_di
             # msg : string giving cause of failure if one exists
             # ier : an int. if ier is 1,2,3 or 4, a solution was found, else no solution was found
             #p1,covx,idict,msg,ier = optimize.leastsq(errfunc, pzero, args=(rads(numpy.array(angle_list)),torprmdict, tor_energy_list), full_output = True)
-            array=optimize.least_squares(errfunc, pzero, jac='3-point', bounds=(-max_amp, max_amp), args=(torgen.rads(poltype,numpy.array(angle_list)),torprmdict, tor_energy_list))
+            array=optimize.least_squares(errfunc, pzero, jac='2-point', bounds=(-max_amp, max_amp), args=(torgen.rads(poltype,numpy.array(angle_list)),torprmdict, tor_energy_list))
             p1=array['x']
 
             # Remove parameters found by least.sq that aren't reasonable; 

@@ -15,13 +15,14 @@ import numpy
 from rdkit.Chem.rdmolfiles import MolFromMol2File
 from rdkit.Chem import rdMolTransforms as rdmt
 from rdkit import Chem
+import subprocess
 
 def __init__(poltype):
     PolarizableTyper.__init__(poltype)
     
 def CallJobsSeriallyLocalHost(poltype,listofjobs):
     for job in listofjobs:
-        poltype.call_subsystem(job,True)
+        poltype.call_subsystem(job,False)
 
 
 def ExecuteOptJobs(poltype,listofstructurestorunQM,fullrange,optmol,a,b,c,d,torang,consttorlist,torsionrestraint):
@@ -199,11 +200,24 @@ def tinker_minimize_analyze_QM_Struct(poltype,molecprefix,a,b,c,d,torang,optmol,
     prevstruct = opt.load_structfile(poltype,prevstrctfname) # this should be a logfile
     prevstruct=opt.rebuild_bonds(poltype,prevstruct,optmol)
     cartxyz,torxyzfname,newtorxyzfname,keyfname=tinker_minimize(poltype,molecprefix,a,b,c,d,optmol,consttorlist,phaseangle,torsionrestraint,prevstruct,torang,designatexyz,keybase,keybasepath)
-    tinker_analyze(poltype,newtorxyzfname,keyfname)
+    toralzfname = os.path.splitext(torxyzfname)[0] + '.alz'
+    term=AnalyzeTerm(poltype,toralzfname)
+    if term==False:
+        tinker_analyze(poltype,newtorxyzfname,keyfname,toralzfname)
     return cartxyz,newtorxyzfname
 
-def tinker_analyze(poltype,torxyzfname,keyfname):
-    toralzfname = os.path.splitext(torxyzfname)[0] + '.alz'
+def AnalyzeTerm(poltype,filename):
+    term=False
+    if os.path.isfile(filename):
+        temp=open(filename,'r')
+        results=temp.readlines()
+        temp.close()
+        for line in results:
+            if 'Total Potential Energy :' in line:
+                term=True
+    return term
+
+def tinker_analyze(poltype,torxyzfname,keyfname,toralzfname):
     alzcmdstr=poltype.analyzeexe+' -k '+keyfname+' '+torxyzfname+' ed > %s' % toralzfname
     poltype.call_subsystem(alzcmdstr,True)
 
@@ -269,11 +283,10 @@ def gen_torsion(poltype,optmol,torsionrestraint):
     if not os.path.isdir('qm-torsion'):
         os.mkdir('qm-torsion')
     os.chdir('qm-torsion')
-    files=os.listdir(os.getcwd())
      
     poltype.optoutputtotorsioninfo={}
+    listofstructurestorunQM=[]
     for tor in poltype.torlist:
-        
         a,b,c,d = tor[0:4]
         torang = optmol.GetTorsion(a,b,c,d)
         key=str(b)+' '+str(c)
@@ -293,18 +306,18 @@ def gen_torsion(poltype,optmol,torsionrestraint):
             cmd = 'cp ../%s %s' % (poltype.logoptfname,prevstrctfname)
             poltype.call_subsystem(cmd,True)
         
-
-        minstrctfname = prevstrctfname
-        prevstrctfname = minstrctfname
         clock=[0]+list(clock)
         bondtopology=GenerateBondTopology(poltype,optmol)
         listoftinkertorstructuresclock=tinker_minimize_angles(poltype,poltype.molecprefix,a,b,c,d,optmol,consttorlist,clock,prevstrctfname,torsionrestraint,torang,bondtopology)
         listoftinkertorstructurescounterclock=tinker_minimize_angles(poltype,poltype.molecprefix,a,b,c,d,optmol,consttorlist,counterclock,prevstrctfname,torsionrestraint,torang,bondtopology)
-        listofstructurestorunQM=[]
         listofstructurestorunQM.extend(listoftinkertorstructuresclock)
         listofstructurestorunQM.extend(listoftinkertorstructurescounterclock)
         fullrange=list(clock)+list(counterclock)
         outputlogs,listofjobs,scriptname,scratchdir=ExecuteOptJobs(poltype,listofstructurestorunQM,fullrange,optmol,a,b,c,d,torang,consttorlist,torsionrestraint)
+
+        # delete gaussian out file we copied for safe 
+        #cmd = 'rm -rf %s' % (prevstrctfname)
+        #subprocess.run(cmd, shell=True) 
         
         if poltype.externalapi!=None:
             if len(listofjobs)!=0:
@@ -381,7 +394,7 @@ def get_torlist(poltype,mol):
         t3idx=t3.GetIdx()
         t2val=t2.GetValence()
         t3val=t3.GetValence()
-        if (bond.IsRotor()) or (str(t2idx) in poltype.onlyrotbndlist and str(t3idx) in poltype.onlyrotbndlist) or [t2.GetIdx(),t3.GetIdx()] in poltype.fitrotbndslist or [t3.GetIdx(),t2.GetIdx()] in poltype.fitrotbndslist or (poltype.rotalltors and t2val>=2 and t3val>=2):
+        if ((bond.IsRotor()) or (str(t2idx) in poltype.onlyrotbndlist and str(t3idx) in poltype.onlyrotbndlist) or [t2.GetIdx(),t3.GetIdx()] in poltype.fitrotbndslist or [t3.GetIdx(),t2.GetIdx()] in poltype.fitrotbndslist or (poltype.rotalltors and t2val>=2 and t3val>=2)) and bond.IsInRing()==False and t2.IsInRing()==False and t3.IsInRing()==False:
             skiptorsion = False
             t1,t4 = find_tor_restraint_idx(poltype,mol,t2,t3)
             # is the torsion in toromitlist
@@ -639,20 +652,20 @@ def gen_torcomfile (poltype,comfname,numproc,torsmem,maxdisk,prevstruct,xyzf):
 
     optimizeoptlist = [poltype.gausoptcoords]
     optimizeoptlist.append("maxcycle=400")
-    optimizeoptlist.append("calcAll")
+    optimizeoptlist.append("calcFC")
     optstr=opt.gen_opt_str(poltype,optimizeoptlist)
 
     if ('-opt-' in comfname):
         if poltype.toroptpcm==True:
             operationstr = "%s %s/%s MaxDisk=%s IOP(5/13=1) SCRF=(PCM)\n" % (optstr,poltype.toroptmethod,poltype.toroptbasisset, maxdisk)
         else:
-            operationstr = "%s %s/%s MaxDisk=%s IOP(5/13=1) Guess=INDO\n" % (optstr,poltype.toroptmethod,poltype.toroptbasisset, maxdisk)
+            operationstr = "%s %s/%s MaxDisk=%s IOP(5/13=1)\n" % (optstr,poltype.toroptmethod,poltype.toroptbasisset, maxdisk)
         commentstr = poltype.molecprefix + " Rotatable Bond Optimization on " + gethostname()
     else:
         if poltype.torsppcm==True:
-            operationstr = "#P %s/%s SP SCF=(qc,maxcycle=800) Guess=Indo MaxDisk=%s SCRF=(PCM) Pop=NBORead\n" % (poltype.torspmethod,poltype.torspbasisset, maxdisk)
+            operationstr = "#P %s/%s SP SCF=(qc,maxcycle=400) Guess=Indo MaxDisk=%s SCRF=(PCM) Pop=NBORead\n" % (poltype.torspmethod,poltype.torspbasisset, maxdisk)
         else:       
-            operationstr = "#P %s/%s SP SCF=(qc,maxcycle=800) Guess=Indo MaxDisk=%s Pop=NBORead\n" % (poltype.torspmethod,poltype.torspbasisset, maxdisk)
+            operationstr = "#P %s/%s SP SCF=(qc,maxcycle=400) Guess=Indo MaxDisk=%s Pop=NBORead\n" % (poltype.torspmethod,poltype.torspbasisset, maxdisk)
 
         commentstr = poltype.molecprefix + " Rotatable Bond SP Calculation on " + gethostname()   
 
@@ -860,3 +873,33 @@ def RemoveDuplicateRotatableBondTypes(poltype):
             if tor in poltype.torlist:
                 poltype.torlist.remove(tor)
     return poltype.torlist 
+
+
+def PrependStringToKeyfile(poltype,keyfilename,string):
+    """
+    Intent: Adds a header to the key file given by 'keyfilename'
+    """
+    tmpfname = keyfilename + "_tmp"
+    tmpfh = open(tmpfname, "w")
+    keyfh = open(keyfilename, "r")
+    tmpfh.write(string+'\n')
+
+    for line in keyfh:
+        tmpfh.write(line)
+    shutil.move(tmpfname, keyfilename)
+
+def RemoveStringFromKeyfile(poltype,keyfilename,string):
+    """
+    Intent: Adds a header to the key file given by 'keyfilename'
+    """
+    tmpfname = keyfilename + "_tmp"
+    tmpfh = open(tmpfname, "w")
+    keyfh = open(keyfilename, "r")
+
+    for line in keyfh:
+        if string in line:
+            pass
+        else:
+            tmpfh.write(line)
+    shutil.move(tmpfname, keyfilename)
+

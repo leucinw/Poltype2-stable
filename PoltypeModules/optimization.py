@@ -26,7 +26,8 @@ def CreatePsi4OPTInputFile(poltype,comfilecoords,comfilename,mol):
         temp.write(' d_convergence 10 '+'\n')
         temp.write(' scf_type pk'+'\n')
         temp.write(' pcm true'+'\n')
-        temp.write('  pcm_scf_type total '+'\n')
+        temp.write(' pcm_scf_type total '+'\n')
+        temp.write(' geom_maxiter '+str(poltype.optmaxcycle)+'\n')
         temp.write('}'+'\n')
         temp.write('pcm = {'+'\n')
         temp.write(' Units = Angstrom'+'\n')
@@ -42,6 +43,11 @@ def CreatePsi4OPTInputFile(poltype,comfilecoords,comfilename,mol):
         temp.write(' Mode = Implicit'+'\n')
         temp.write(' }'+'\n')
         temp.write('}'+'\n')
+    else:
+        temp.write('set {'+'\n')
+        temp.write(' geom_maxiter '+str(poltype.optmaxcycle)+'\n')
+        temp.write('}'+'\n')
+
         
     temp.write('memory '+poltype.maxmem+'\n')
     temp.write('set_num_threads(%s)'%(poltype.numproc)+'\n')
@@ -133,33 +139,18 @@ def gen_optcomfile(poltype,comfname,numproc,maxmem,maxdisk,chkname,mol):
     commentstr = poltype.molecprefix + " Gaussian SP Calculation on " + gethostname()
     tmpfh.write('\n%s\n\n' % commentstr)
     tmpfh.write('%d %d\n' % (mol.GetTotalCharge(), mol.GetTotalSpinMultiplicity()))
-    iteratom = openbabel.OBMolAtomIter(mol)
+    tmpfh.close()
+
+    iteratombab = openbabel.OBMolAtomIter(mol)
+    print('atomnumber',mol.NumAtoms())
+    tmpfh = open(comfname, "a")
     etab = openbabel.OBElementTable()
-    for atm in iteratom:
+    for atm in iteratombab:
         tmpfh.write('%2s %11.6f %11.6f %11.6f\n' % (etab.GetSymbol(atm.GetAtomicNum()), atm.x(), atm.y(), atm.z()))
     tmpfh.write('\n')
 
     tmpfh.close()
-    tmpfh = open(comfname, "a")
-    tmpfh.write("\n")
-    tmpfh.close()
-
-    tempname=comfname.replace('.com','temp.com')
-    temp=open(comfname,'r')
-    results=temp.readlines()
-    temp.close()
-    temp=open(tempname,'w')
-    for lineidx in range(len(results)):
-        line=results[lineidx]
-        if lineidx!=9:
-            temp.write(line)
-        else:
-            temp.write('%d %d\n' % (mol.GetTotalCharge(), 1))
-
-    temp.close()
-    os.remove(comfname)
-    os.rename(tempname,comfname)
-
+    
 def gen_opt_str(poltype,optimizeoptlist):
     optstr = "#P opt"
     if optimizeoptlist:
@@ -185,7 +176,9 @@ def CheckBondConnectivity(poltype,mol,optmol):
     atomitermol=openbabel.OBMolAtomIter(mol)
     atomiteroptmol=openbabel.OBMolAtomIter(optmol)
     for atm in atomitermol:
+       
         atmidxmol=atm.GetIdx()
+        
         atmoptmol=optmol.GetAtom(atmidxmol)
         atmidxoptmol=atmoptmol.GetIdx()
         atmneighbidxlist=[]
@@ -203,11 +196,11 @@ def CheckBondConnectivity(poltype,mol,optmol):
             else:
                 diff=set(atmneighbidxlistoptmol)-set(atmneighbidxlist)
                 idxset='optmol'
-            RaiseConnectivityError(diff,idxset)
+            RaiseConnectivityError(poltype,diff,idxset)
 
 def RaiseConnectivityError(poltype,diff,idxset):
     print('Error! The bond connectivity before and after structure optimization is different')
-    poltype.WriteTolog('Error! The bond connectivity before and after structure optimization is different')
+    poltype.WriteToLog('Error! The bond connectivity before and after structure optimization is different')
     for atmidx in diff:
         print('The atom index '+str(atmidx)+' from structure '+idxset+' does not have the same connectivity before and after structure optimization')
         poltype.WriteToLog('The atom index '+str(atmidx)+' from structure '+idxset+' does not have the same connectivity before and after structure optimization')
@@ -252,34 +245,14 @@ def StructureMinimization(poltype):
 def GeometryOptimization(poltype,mol):
     poltype.WriteToLog("NEED QM Density Matrix: Executing Gaussian Opt and SP")
     
-    title = "\"" + poltype.molecprefix + " Gaussian Optimization on " + gethostname() + "\""
-    cmdstr = poltype.babelexe + " --title " + title + " "+ poltype.molstructfname+ " " + poltype.comtmp
-    poltype.call_subsystem(cmdstr,True)
-
-    assert os.path.getsize(poltype.comtmp) > 0, "Error: " + \
-       os.path.basename(poltype.babelexe) + " cannot create .com file."
-
-    tempname=poltype.comtmp.replace('.com','temp.com')
-    temp=open(poltype.comtmp,'r')
-    results=temp.readlines()
-    temp.close()
-    temp=open(tempname,'w')
-    for lineidx in range(len(results)):
-        line=results[lineidx]
-        if lineidx!=4:
-            temp.write(line)
-        else:
-            temp.write('%d %d\n' % (mol.GetTotalCharge(), mol.GetTotalSpinMultiplicity()))
-
-    temp.close()
-    os.remove(poltype.comtmp)
-    os.rename(tempname,poltype.comtmp)
     if poltype.use_gaus==False and poltype.use_gausoptonly==False:
-        mkdirstr='mkdir '+poltype.scratchdir
-        poltype.call_subsystem(mkdirstr,True)
+        if not os.path.exists(poltype.scratchdir):
+            mkdirstr='mkdir '+poltype.scratchdir
+            poltype.call_subsystem(mkdirstr,True)
     else:
-        mkdirstr='mkdir '+poltype.scrtmpdir
-        poltype.call_subsystem(mkdirstr,True)
+        if not os.path.exists(poltype.scrtmpdir):
+            mkdirstr='mkdir '+poltype.scrtmpdir
+            poltype.call_subsystem(mkdirstr,True)
 
     if (poltype.use_gaus==True or poltype.use_gausoptonly==True): # try to use gaussian for opt
         term,error=is_qm_normal_termination(poltype,poltype.logoptfname)
@@ -293,7 +266,9 @@ def GeometryOptimization(poltype,mol):
             poltype.call_subsystem(cmdstr,True)
             cmdstr = poltype.formchkexe + " " + poltype.chkoptfname
             poltype.call_subsystem(cmdstr)
-        term,error=is_qm_normal_termination(poltype,poltype.logoptfname) 
+        term,error=is_qm_normal_termination(poltype,poltype.logoptfname)
+        if error and term==False:
+            poltype.RaiseOutputFileError(poltype.logoptfname) 
         optmol =  load_structfile(poltype,poltype.logoptfname)
         optmol=rebuild_bonds(poltype,optmol,mol)
                 
@@ -306,6 +281,8 @@ def GeometryOptimization(poltype,mol):
             cmdstr='psi4 '+inputname+' '+poltype.logoptfname
             poltype.call_subsystem(cmdstr,True)
         term,error=is_qm_normal_termination(poltype,poltype.logoptfname) # now grabs final structure when finished with QM if using Psi4
+        if error and term==False:
+            poltype.RaiseOutputFileError(poltype.logoptfname) 
 
         optmol =  load_structfile(poltype,poltype.logoptfname.replace('.log','.xyz'))
         optmol=rebuild_bonds(poltype,optmol,mol)
@@ -360,7 +337,7 @@ def is_qm_normal_termination(poltype,logfname): # needs to handle error checking
       
             elif "Normal termination" in line:
                 term=True
-            elif ('error' in line or 'Error' in line or 'ERROR' in line or 'impossible' in line or 'software termination' in line or 'segmentation violation' in line) and 'DIIS' not in line:
+            elif ('error' in line or 'Error' in line or 'ERROR' in line or 'impossible' in line or 'software termination' in line or 'segmentation violation' in line or 'galloc:  could not allocate memory' in line) and 'DIIS' not in line:
                 error=True
     if term==True:
         GrabFinalXYZStructure(poltype,logfname,logfname.replace('.log','.xyz'))

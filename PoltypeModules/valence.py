@@ -48,18 +48,7 @@ class Valence():
         return self.missed_torsions
 
 
-    def CheckAnglePAtomsSubset(self,opbatoms,anglepatoms):
-        l1=[str(i) for i in opbatoms]
-        l2=[str(i) for i in anglepatoms]
-        l1string=','.join(l1)
-        l2string=','.join(l2)
-        check=True
-        for angpatom in anglepatoms:
-            if angpatom not in opbatoms:
-                check=False
-        return check 
-
-
+    
     def opbset (self,smarts, opbval, opbhash, mol):
         """
         Intent: Set out-of-plane bend (opbend) parameters using Smarts Patterns
@@ -80,7 +69,7 @@ class Valence():
                     if opbkey not in opbhash:
                         opbhash[opbkey] = [self.defopbendval, False,smarts]
     
-    def gen_valinfile (self,mol,rotbndlist):
+    def gen_valinfile (self,mol):
         """
         Intent: Find aromatic carbon and bonded hydrogens to correct polarizability
         Find out-of-plane bend values using a look up table
@@ -170,18 +159,18 @@ class Valence():
         # 76 76 0 0 benzene cc
         # 78 78 0 0 ethylbenzene cc
         self.opbset('cc', 0.200, opbhash, mol)
-        #self.opbset('[#6D3][*]', 0.200, opbhash, mol)
-    
+        #self.opbset('[#6D3][*]', 0.200, opbhash, mol)    
         #print('hash items ',opbhash.items())
-    
-    
+        
+        return opbhash.items()
+
+    def RotatableBonds(self,rotbndlist):
         rotbndprmlist = []
         for rotbnd in rotbndlist.values():
             for rotbndprm in rotbnd:
                 rotlist=list(rotbndprm)
                 rotbndprmlist.append(rotlist)
-        return opbhash.items(),rotbndprmlist
-
+        return rotbndprmlist
 
 
     def vdwguess(self, mol):
@@ -1563,6 +1552,8 @@ class Valence():
         if self.versionnum>=8.7:
             shoulduseanglep = True
 
+
+
         d = dict()
         for v in vals:
             for skey in iter(v):
@@ -1578,7 +1569,7 @@ class Valence():
                     c = mol.GetAtom(ia[2])
                     angle = mol.GetAngle(a,b,c)
                     if b.GetHyb()==2 and shoulduseanglep==True: # only for SP2 hyb middle atoms use angp
-                        if b.IsInRing() and b.IsAromatic():
+                        if b.IsInRing() and b.IsAromatic() and b.GetValence()==3:
                             key2 = 'anglep%8d%6d%6d%11.4f%10.4f' % (key1[0], key1[1], key1[2], v[skey][0], angle)
                         else:
                             key2 = 'angle%8d%6d%6d%11.4f%10.4f' % (key1[0], key1[1], key1[2], v[skey][0], angle)
@@ -2013,7 +2004,7 @@ class Valence():
         x=list(d.values())
         return x
 
-    def torguess(self, mol, dorot, rotbnds,checksmarts=None):
+    def torguess(self, mol, dorot, rotbnds):
         found = []
         vals = []
 
@@ -2572,16 +2563,7 @@ class Valence():
         vals.append(torvals5)
         vals.append(torparamvals1)
 
-        if checksmarts!=None: # then check in each dictionary key (smartsstring) to see if checksmarts (SMART string to be checked) exists in any dictionary
-            foundmatch=False
-            for dic in vals:
-                for smarts in dic.keys():
-                    if checksmarts==smarts:
-                        foundmatch=True
-            
-            return foundmatch
-
-
+        
         torsunit = .5
         torkeytoSMILES={}
         torkeytoindexlist={}
@@ -2605,7 +2587,17 @@ class Valence():
                     secondneighborindexes=indextoneighbidxs[int(ia[2])]
                     neighborindexes=firstneighborindexes+secondneighborindexes
                     check=self.CheckIfNeighborsExistInSMARTMatch(neighborindexes,ia)
-                    if check==False:
+                    rot=self.CheckIfTorsionIsRotatable(rotbnds,ia)
+                    if(len(v[skey]) == 7):
+                        bidx=ia[v[skey][1] - 1] 
+                        cidx=ia[v[skey][2] - 1]
+                    else:
+                        bidx=ia[1]
+                        cidx=ia[2]
+                    b=mol.GetAtom(bidx)
+                    c=mol.GetAtom(cidx)
+                    bond=mol.GetBond(bidx,cidx)
+                    if check==False and bond.IsInRing()==False and b.IsInRing()==False and c.IsInRing()==False and rot==True:
                         zeroed=True
                     if(dorot):
                         for r in rotbnds:
@@ -2624,7 +2616,6 @@ class Valence():
                         else:
                             key2 = 'torsion%6d%6d%6d%6d%11.4f 0.0 1 %10.4f 180.0 2 %10.4f 0.0 3' % (key1[0], key1[1], key1[2], key1[3], v[skey][0]/torsunit, v[skey][1]/torsunit, v[skey][2]/torsunit)
                     key1string = '%d %d %d %d' % (key1[0], key1[1], key1[2], key1[3])
-                    
 
                     torkeytoSMILES.update({key1string:skey})
                     torkeytoindexlist[key1string]=ia
@@ -2656,6 +2647,20 @@ class Valence():
         #x = [ t[1] for t in sortedtuple ]
         x=list(d.values())
         return x
+
+    def CheckIfTorsionIsRotatable(self,rotbnds,ia):
+        rot=False
+        for r in rotbnds:
+            a=r[0]
+            b=r[1]
+            c=r[2]
+            d=r[3]
+            if ia[0]==a and ia[1]==b and ia[2]==c and ia[3]==d:
+                rot=True
+            elif ia[0]==d and ia[1]==c and ia[2]==b and ia[3]==a:
+                rot=True
+        return rot
+
 
     def FindAllNeighborIndexes(self,mol):
         indextoneighbidxs={}
@@ -2696,7 +2701,7 @@ class Valence():
             smarts=keytosmarts[key]
             kstring='opbend %6d%6d%6d%6d%11.4f' % (key[0],key[1],key[2],key[3], opbparm[1]*71.94)
             x.append(kstring)
-            self.logfh.write(kstring+' matched from '+smarts+' has parameters '+str(opbparm[1]*71.94)+'\n')
+            #self.logfh.write(kstring+' matched from '+smarts+' has parameters '+str(opbparm[1]*71.94)+'\n')
         return x
 
     def pitorguess(self,mol):
@@ -2762,7 +2767,8 @@ class Valence():
         return new_sbs[:]
 
     def appendtofile(self, vf, mol,dorot,rotbndlist):
-        opbendvals,rotbnds=self.gen_valinfile(mol,rotbndlist)
+        rotbnds=self.RotatableBonds(rotbndlist)
+        opbendvals=self.gen_valinfile(mol)
         temp=open(vf,'r')
         results=temp.readlines()
         temp.close()
