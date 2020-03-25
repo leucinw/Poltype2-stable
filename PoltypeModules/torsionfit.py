@@ -361,6 +361,15 @@ def get_qmmm_rot_bond_energy(poltype,mol,tmpkey1basename):
         qme_list,qang_list = compute_qm_tor_energy(poltype,a,b,c,d,initangle,anglist)
         mme_list,mang_list,tor_e_list = compute_mm_tor_energy(poltype,mol,
         a,b,c,d,initangle,'_postQMOPTprefit',torang,anglist,tmpkey1basename)
+
+        # zero the very high energy
+        min_qme = numpy.array(qme_list).min() 
+        min_mme = numpy.array(mme_list).min() 
+        for i in range(len(qme_list)):
+          if ((qme_list[i]-min_qme > 15.0)) or ((mme_list[i]-min_mme) > 15.0):
+            qme_list[i] = min_qme 
+            mme_list[i] = min_mme
+          
         # delete members of the list where the energy was not able to be found 
         del_ang_list = find_del_list(poltype,mme_list,mang_list)
         (cls_angle_dict[clskey],cls_mm_engy_dict[clskey])=prune_mme_error(poltype,del_ang_list,cls_angle_dict[clskey],cls_mm_engy_dict[clskey])
