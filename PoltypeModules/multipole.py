@@ -237,7 +237,8 @@ def gen_peditinfile(poltype,mol):
 
     
         f.write("\n")
-        f.write('A'+'\n')
+        if poltype.doamoebaplus==False:
+           f.write('A'+'\n')
 
         #Find aromatic carbon, halogens, and bonded hydrogens to correct polarizability
         iteratom = openbabel.OBMolAtomIter(mol)
@@ -299,6 +300,8 @@ def gen_peditinfile(poltype,mol):
         #f.write('\n')
         f.write('\n')
         f.write("N\n")
+        if poltype.doamoebaplus==True:
+            f.write("N\n")
         f.close()
     return lfzerox,atomindextoremovedipquad,atomtypetospecialtrace,atomindextoremovedipquadcross
 

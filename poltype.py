@@ -41,7 +41,7 @@ from rdkit.Chem import rdmolfiles
 
 class PolarizableTyper():
 
-    def __init__(self,poltypepath=os.path.split(sys.argv[0])[0],WBOtol=.01,wholexyz=None,wholemol=None,dontfrag=True,isfragjob=False,dipoletol=.1,externalapi=None,printoutput=False,poltypeini=True,structure=None,prmstartidx=401,numproc=1,maxmem="700MB",torsmem="700MB",maxdisk="100GB",gausdir=None,gdmadir=None,tinkerdir=None,scratchdir="/scratch",paramhead=sys.path[0] + "/amoebabio18_header.prm",babelexe="babel",gausexe='g09',formchkexe='formchk',cubegenexe='cubegen',gdmaexe='gdma',avgmpolesexe=sys.path[0] + "/avgmpoles.pl",peditexe='poledit.x',potentialexe='potential.x',minimizeexe='minimize.x',analyzeexe='analyze.x',superposeexe='superpose.x',defopbendval=0.20016677990819662,Hartree2kcal_mol=627.5095,optbasisset='6-31G*',toroptbasisset='6-31G*',dmabasisset='6-311G**',espbasisset="6-311++G(2d,2p)",torspbasisset="6-311++G**",optmethod='wB97X-D',toroptmethod='wB97X-D',torspmethod='MP2',dmamethod='MP2',espmethod='MP2',qmonly = False,espfit = True,parmtors = True,foldnum=3,foldoffsetlist = [ 0.0, 180.0, 0.0, 0.0, 0.0, 0.0 ],torlist = None,rotbndlist = None,fitrotbndslist=None,maxRMSD=.1,maxRMSPD=1,maxtorRMSPD=2,tordatapointsnum=None,gentorsion=False,gaustorerror=False,torsionrestraint=.1,onlyrotbndlist=None,rotalltors=False,dontdotor=False,dontdotorfit=False,toroptpcm=False,optpcm=False,torsppcm=False,use_gaus=False,use_gausoptonly=False,freq=False,postfit=False,bashrcpath=None,amoebabioprmpath=None,libpath=sys.path[0] + "/lib.bio18_conv1.txt",SMARTSToTypelibpath=sys.path[0]+'/SMARTSToTypeLib.txt',ModifiedResiduePrmPath=sys.path[0]+'/ModifiedResidue.prm',modifiedproteinpdbname=None,unmodifiedproteinpdbname=None,mutatedsidechain=None,mutatedresiduenumber=None,modifiedresiduepdbcode=None,optmaxcycle=400,torkeyfname=None,gausoptcoords='',uniqidx=False ,helpfile=sys.path[0]+'/README.HELP',versionfile=sys.path[0]+'/README.VERSION'): 
+    def __init__(self,poltypepath=os.path.split(sys.argv[0])[0],WBOtol=.01,wholexyz=None,wholemol=None,dontfrag=True,isfragjob=False,dipoletol=.1,externalapi=None,printoutput=False,poltypeini=True,structure=None,prmstartidx=401,numproc=1,maxmem="700MB",torsmem="700MB",maxdisk="100GB",gausdir=None,gdmadir=None,tinkerdir=None,scratchdir="/scratch",paramhead=sys.path[0] + "/amoebabio18_header.prm",babelexe="babel",gausexe='g09',formchkexe='formchk',cubegenexe='cubegen',gdmaexe='gdma',avgmpolesexe=sys.path[0] + "/avgmpoles.pl",peditexe='poledit.x',potentialexe='potential.x',minimizeexe='minimize.x',analyzeexe='analyze.x',superposeexe='superpose.x',defopbendval=0.20016677990819662,Hartree2kcal_mol=627.5095,optbasisset='6-31G*',toroptbasisset='6-31G*',dmabasisset='6-311G**',espbasisset="6-311++G(2d,2p)",torspbasisset="6-311++G**",optmethod='wB97X-D',toroptmethod='wB97X-D',torspmethod='MP2',dmamethod='MP2',espmethod='MP2',qmonly = False,espfit = True,parmtors = True,foldnum=3,foldoffsetlist = [ 0.0, 180.0, 0.0, 0.0, 0.0, 0.0 ],torlist = None,rotbndlist = None,fitrotbndslist=None,maxRMSD=.1,maxRMSPD=1,maxtorRMSPD=2,tordatapointsnum=None,gentorsion=False,gaustorerror=False,torsionrestraint=.1,onlyrotbndlist=None,rotalltors=False,dontdotor=False,dontdotorfit=False,toroptpcm=False,optpcm=False,torsppcm=False,use_gaus=False,use_gausoptonly=False,freq=False,postfit=False,bashrcpath=None,amoebabioprmpath=None,libpath=sys.path[0] + "/lib.bio18_conv1.txt",SMARTSToTypelibpath=sys.path[0]+'/SMARTSToTypeLib.txt',ModifiedResiduePrmPath=sys.path[0]+'/ModifiedResidue.prm',modifiedproteinpdbname=None,unmodifiedproteinpdbname=None,mutatedsidechain=None,mutatedresiduenumber=None,modifiedresiduepdbcode=None,optmaxcycle=400,torkeyfname=None,gausoptcoords='',uniqidx=False ,helpfile=sys.path[0]+'/README.HELP',versionfile=sys.path[0]+'/README.VERSION', doamoebaplus=False): 
         self.WBOtol=WBOtol
         self.isfragjob=isfragjob
         self.wholexyz=wholexyz
@@ -166,15 +166,11 @@ class PolarizableTyper():
                 sys.exit()
         
         if self.poltypeini==True:
-            temp=open(os.getcwd()+r'/'+'poltype.ini','r')
-            results=temp.readlines()
-            temp.close()
-            for line in results:
+            for line in open(os.path.join(os.getcwd(), 'poltype.ini')).readlines()
                 if '#' not in line and line!='\n':
                     if '=' in line:
-                        linesplit=line.split('=',1)
-                        a=linesplit[1].replace('\n','').rstrip().lstrip()
-                        newline=linesplit[0]
+                        newline = line.split('=')[0]
+                        a = line.split("=")[1][:-1]
                     else:
                         newline=line
 
@@ -292,6 +288,8 @@ class PolarizableTyper():
                         self.gausdir = a
                     elif "qmonly" in newline:
                         self.qmonly = True
+                    elif "doamoebaplus" in newline:
+                        self.doamoebaplus = True
                     elif "uniqidx" in newline:
                         self.uniqidx = True
                     elif "help" in newline:
@@ -382,9 +380,6 @@ class PolarizableTyper():
                     sys.exit(1)
     
     
-                
-    
-    
         cmdstr=self.analyzeexe+' '+self.poltypepath+r'/'+'water.xyz'+' '+'-k'+' '+self.poltypepath+r'/'+'water.key'+' '+'e'+'>'+' '+'version.out'
         try:
             if self.printoutput==True:
@@ -392,9 +387,7 @@ class PolarizableTyper():
             returned_value = subprocess.call(cmdstr, shell=True)
         except:
             pass
-        temp=open('version.out','r')
-        results=temp.readlines()
-        temp.close()
+        results = open('version.out').readlines()
         latestversion = False
         for line in results:
             if "Version" in line:
@@ -403,10 +396,8 @@ class PolarizableTyper():
                 if self.versionnum>=8.7:
                     latestversion = True
                     break
-           
-        #if(not latestversion):
-        #    
-        #    raise ValueError("Notice: Not latest version of tinker (>=8.7)")
+        if(not latestversion):
+            print("Notice: Not latest version of tinker (>=8.7)")
       
         if ("TINKERDIR" in os.environ):
             self.tinkerdir = os.environ["TINKERDIR"]
@@ -509,19 +500,12 @@ class PolarizableTyper():
     
     
     def copyright (self):
-        temp=open(self.versionfile,'r')
-        results=temp.readlines()
-        temp.close()
-        for line in results:
+        for line in open(self.versionfile).readlines():
             print(line)
     
     def usage (self):
-        temp=open(self.helpfile,'r')
-        results=temp.readlines()
-        temp.close()
-        for line in results:
+        for line in open(self.helpfile).readlines():
             print(line)
-    
     
     
     def CheckIsInput2D(self,mol,obConversion):
@@ -545,7 +529,6 @@ class PolarizableTyper():
         return mol
     
     
-
     def call_subsystem(self,cmdstr,wait=False):
         curdir=os.getcwd()
         if self.printoutput==True:
@@ -559,9 +542,7 @@ class PolarizableTyper():
                 sys.exit(1)
 
     def WriteOutLiteratureReferences(self,keyfilename): # to use ParmEd on key file need Literature References delimited for parsing
-        temp=open(keyfilename,'r')
-        results=temp.readlines()
-        temp.close()
+        results=open(keyfilename).readlines()
         tempname=keyfilename.replace('.key','_temp.key')
         temp=open(tempname,'w')
         foundatomblock=False
