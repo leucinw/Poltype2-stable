@@ -15,7 +15,6 @@ import numpy
 from rdkit.Chem.rdmolfiles import MolFromMol2File
 from rdkit.Chem import rdMolTransforms as rdmt
 from rdkit import Chem
-import subprocess
 
 def __init__(poltype):
     PolarizableTyper.__init__(poltype)
@@ -285,7 +284,6 @@ def gen_torsion(poltype,optmol,torsionrestraint):
     os.chdir('qm-torsion')
      
     poltype.optoutputtotorsioninfo={}
-    listofstructurestorunQM=[]
     for tor in poltype.torlist:
         a,b,c,d = tor[0:4]
         torang = optmol.GetTorsion(a,b,c,d)
@@ -310,6 +308,7 @@ def gen_torsion(poltype,optmol,torsionrestraint):
         bondtopology=GenerateBondTopology(poltype,optmol)
         listoftinkertorstructuresclock=tinker_minimize_angles(poltype,poltype.molecprefix,a,b,c,d,optmol,consttorlist,clock,prevstrctfname,torsionrestraint,torang,bondtopology)
         listoftinkertorstructurescounterclock=tinker_minimize_angles(poltype,poltype.molecprefix,a,b,c,d,optmol,consttorlist,counterclock,prevstrctfname,torsionrestraint,torang,bondtopology)
+        listofstructurestorunQM=[]
         listofstructurestorunQM.extend(listoftinkertorstructuresclock)
         listofstructurestorunQM.extend(listoftinkertorstructurescounterclock)
         fullrange=list(clock)+list(counterclock)
