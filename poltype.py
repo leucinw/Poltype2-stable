@@ -41,17 +41,14 @@ from rdkit.Chem import rdmolfiles
 
 class PolarizableTyper():
 
-    def __init__(self,poltypepath=os.path.split(sys.argv[0])[0],WBOtol=.01,wholexyz=None,wholemol=None,dontfrag=True,isfragjob=False,dipoletol=.1,externalapi=None,printoutput=False,poltypeini=True,structure=None,prmstartidx=401,numproc=1,maxmem="700MB",torsmem="700MB",maxdisk="100GB",gausdir=None,gdmadir=None,tinkerdir=None,scratchdir="/scratch",paramhead=sys.path[0] + "/amoebabio18_header.prm",babelexe="babel",gausexe='g09',formchkexe='formchk',cubegenexe='cubegen',gdmaexe='gdma',avgmpolesexe=sys.path[0] + "/avgmpoles.pl",peditexe='poledit.x',potentialexe='potential.x',minimizeexe='minimize.x',analyzeexe='analyze.x',superposeexe='superpose.x',defopbendval=0.20016677990819662,Hartree2kcal_mol=627.5095,optbasisset='6-31G*',toroptbasisset='6-31G*',dmabasisset='6-311G**',espbasisset="6-311++G(2d,2p)",torspbasisset="6-311++G**",optmethod='wB97X-D',toroptmethod='wB97X-D',torspmethod='MP2',dmamethod='MP2',espmethod='MP2',qmonly = False,espfit = True,parmtors = True,foldnum=3,foldoffsetlist = [ 0.0, 180.0, 0.0, 0.0, 0.0, 0.0 ],torlist = None,rotbndlist = None,fitrotbndslist=None,maxRMSD=.1,maxRMSPD=1,maxtorRMSPD=2,tordatapointsnum=None,gentorsion=False,gaustorerror=False,torsionrestraint=.1,onlyrotbndlist=None,rotalltors=False,dontdotor=False,dontdotorfit=False,toroptpcm=False,optpcm=False,torsppcm=False,use_gaus=False,use_gausoptonly=False,freq=False,postfit=False,bashrcpath=None,amoebabioprmpath=None,libpath=sys.path[0] + "/lib.bio18_conv1.txt",SMARTSToTypelibpath=sys.path[0]+'/SMARTSToTypeLib.txt',ModifiedResiduePrmPath=sys.path[0]+'/ModifiedResidue.prm',modifiedproteinpdbname=None,unmodifiedproteinpdbname=None,mutatedsidechain=None,mutatedresiduenumber=None,modifiedresiduepdbcode=None,optmaxcycle=400,torkeyfname=None,gausoptcoords='',uniqidx=False ,helpfile=sys.path[0]+'/README.HELP',versionfile=sys.path[0]+'/README.VERSION', doamoebaplus=False): 
+    def __init__(self,poltypepath=os.path.split(sys.argv[0])[0],WBOtol=.01,dontfrag=True,isfragjob=False,dipoletol=.1,externalapi=None,printoutput=False,poltypeini=True,structure=None,prmstartidx=401,numproc=1,maxmem="700MB",torsmem="700MB",maxdisk="100GB",gausdir=None,gdmadir=None,tinkerdir=None,scratchdir="/scratch",paramhead=sys.path[0] + "/amoebabio18_header.prm",babelexe="babel",gausexe='g09',formchkexe='formchk',cubegenexe='cubegen',gdmaexe='gdma',avgmpolesexe=sys.path[0] + "/avgmpoles.pl",peditexe='poledit.x',potentialexe='potential.x',minimizeexe='minimize.x',analyzeexe='analyze.x',superposeexe='superpose.x',defopbendval=0.20016677990819662,Hartree2kcal_mol=627.5095,optbasisset='6-31G*',toroptbasisset='6-31G*',dmabasisset='6-311G**',espbasisset="6-311++G(2d,2p)",torspbasisset="6-311++G**",optmethod='wB97X-D',toroptmethod='wB97X-D',torspmethod='MP2',dmamethod='MP2',espmethod='MP2',qmonly = False,espfit = True,parmtors = True,foldnum=3,foldoffsetlist = [ 0.0, 180.0, 0.0, 0.0, 0.0, 0.0 ],torlist = None,rotbndlist = None,fitrotbndslist=None,maxRMSD=.1,maxRMSPD=1,maxtorRMSPD=2,tordatapointsnum=None,gentorsion=False,gaustorerror=False,torsionrestraint=.1,onlyrotbndlist=None,rotalltors=False,dontdotor=False,dontdotorfit=False,toroptpcm=False,optpcm=False,torsppcm=False,use_gaus=False,use_gausoptonly=False,freq=False,postfit=False,bashrcpath=None,amoebabioprmpath=None,libpath=sys.path[0] + "/lib.bio18_conv1.txt",SMARTSToTypelibpath=sys.path[0]+'/SMARTSToTypeLib.txt',ModifiedResiduePrmPath=sys.path[0]+'/ModifiedResidue.prm',modifiedproteinpdbname=None,unmodifiedproteinpdbname=None,mutatedsidechain=None,mutatedresiduenumber=None,modifiedresiduepdbcode=None,optmaxcycle=400,torkeyfname=None,gausoptcoords='',uniqidx=False ,helpfile=sys.path[0]+'/README.HELP',versionfile=sys.path[0]+'/README.VERSION', doamoebaplus=False): 
         self.WBOtol=WBOtol
         self.isfragjob=isfragjob
-        self.wholexyz=wholexyz
-        self.wholemol=wholemol
         self.dontfrag=dontfrag
         self.dipoletol=dipoletol
         self.externalapi=externalapi
         self.printoutput=printoutput
         self.poltypepath=poltypepath
-        self.poltypeparentdir=os.path.split(self.poltypepath)[0] 
         self.molstructfname=structure
         self.poltypeini=poltypeini
         self.prmstartidx = prmstartidx
@@ -160,13 +157,9 @@ class PolarizableTyper():
                 self.copyright()
                 self.usage()
                 sys.exit(2)
-            elif o in("-u","--unittest"):
-                cmdstr='python'+' '+self.poltypeparentdir+'/'+'PoltypeModules/'+'test_poltype.py'
-                os.system(cmdstr)
-                sys.exit()
-        
+
         if self.poltypeini==True:
-            for line in open(os.path.join(os.getcwd(), 'poltype.ini')).readlines()
+            for line in open(os.path.join(os.getcwd(), 'poltype.ini')).readlines():
                 if '#' not in line and line!='\n':
                     if '=' in line:
                         newline = line.split('=')[0]
@@ -313,7 +306,6 @@ class PolarizableTyper():
         if not __name__ == '__main__':
             params=self.main()
  
-
     def WriteToLog(self,string):
         now = time.strftime("%c",time.localtime())
         self.logfh.write(now+' '+string+'\n')
@@ -577,13 +569,11 @@ class PolarizableTyper():
             head, self.molstructfname = os.path.split(self.molstructfname)
             self.molecprefix =  os.path.splitext(self.molstructfname)[0]
 
-            assert os.path.isfile(self.molstructfname), "Error: Cannot open " + self.molstructfname
         if self.amoebabioprmpath!=None and (self.modifiedproteinpdbname!=None or self.unmodifiedproteinpdbname!=None): # if already have core parameters in modified prm database then dont regenerate parameters
             if check==False:
                 self.GenerateParameters()
         else:
            params= self.GenerateParameters()
-           self.WriteToLog('Poltype Job Finished'+'\n')
            return params
 
     
@@ -604,7 +594,9 @@ class PolarizableTyper():
         self.mol=mol
     
         # Begin log. *-poltype.log
-        self.logfh = open(self.logfname,"a")
+        if os.path.isfile(self.logfname):
+            os.remove(self.logfname)
+        self.logfh = open(self.logfname,"a",buffering=1)
     
         self.mol=self.CheckIsInput2D(self.mol,obConversion)
     
@@ -671,12 +663,8 @@ class PolarizableTyper():
         # Average multipoles based on molecular symmetry
         # Does this using the script avgmpoles.pl which is found in the poltype directory
         # Atoms that belong to the same symm class will now have only one common multipole definition
-        if self.uniqidx:
-            shutil.copy(self.keyfname, self.key2fname)
-            mpole.prepend_keyfile(self,self.key2fname,optmol,True)
-        elif ((not os.path.isfile(self.xyzoutfile) or not os.path.isfile(self.key2fname)) and not self.uniqidx):
+        if not os.path.isfile(self.key2fname):
             mpole.AverageMultipoles(self,optmol)
-            mpole.prepend_keyfile(self,self.key2fname,optmol,True)    
         if self.espfit and not os.path.isfile(self.key3fname):
             # Optimize multipole parameters to QM ESP Grid (*.cube_2)
             # tinker's potential utility is called, with option 6.
@@ -726,8 +714,8 @@ class PolarizableTyper():
                 torgen.PrependStringToKeyfile(self,self.key4fname,'solvate GK')
         if self.isfragjob==False and not os.path.isfile(self.key5fname) and self.dontfrag==False:
 
-            self.rdkitmol=rdmolfiles.MolFromMolFile(poltype.molstructfnamemol,sanitize=True,removeHs=False)
-            WBOmatrix,outputname=frag.GenerateWBOMatrix(poltype,self.rdkitmol,self.logoptfname.replace('.log','.xyz'))
+            self.rdkitmol=rdmolfiles.MolFromMolFile(self.molstructfnamemol,sanitize=True,removeHs=False)
+            WBOmatrix,outputname=frag.GenerateWBOMatrix(self,self.rdkitmol,self.logoptfname.replace('.log','.xyz'))
             highlightbonds=[]
             for tor in self.torlist:
                 rotbnd=[tor[1]-1,tor[2]-1]
@@ -737,8 +725,8 @@ class PolarizableTyper():
             frag.SpawnPoltypeJobsForFragments(self,rotbndindextofragindexmap,rotbndindextofragment)
 
         if self.dontfrag==False and self.isfragjob==False and not os.path.isfile(self.key5fname):
-            frag.GrabTorsionParametersFromFragments(poltype,torlist) # just dump to key_5 since does not exist for parent molecule
-            sys.exit()
+            frag.GrabTorsionParametersFromFragments(self,torlist) # just dump to key_5 since does not exist for parent molecule
+            return
 
        
                
@@ -766,15 +754,23 @@ class PolarizableTyper():
         if self.totalcharge!=0:
             torgen.RemoveStringFromKeyfile(self,self.key5fname,'solvate GK')
         esp.CheckDipoleMoments(self,optmol)
+        self.WriteToLog('Poltype Job Finished'+'\n')
         keyfilecopyname=self.key5fname.replace('.key','_copy.key')
         shutil.copy(self.key5fname,keyfilecopyname)
         torgen.RemoveStringFromKeyfile(self,keyfilecopyname,'SOLUTE')
         torgen.RemoveStringFromKeyfile(self,keyfilecopyname,'TARGET-DIPOLE')
-        os.system('rm *.chk')
-        os.remove(self.tmpxyzfile+'_2') 
+        for fname in os.listdir():
+            if fname.endswith('.chk'):
+                os.remove(fname)
+        if os.path.isdir('qm-torsion'):
+            os.chdir('qm-torsion')
+            for fname in os.listdir():
+                if fname.endswith('.chk'):
+                    os.remove(fname)
+            os.chdir('..')
+        if os.path.isfile(self.tmpxyzfile+'_2'):
+            os.remove(self.tmpxyzfile+'_2') 
         param = parameterfile.AmoebaParameterSet(keyfilecopyname)
-        if self.dontfrag==False and self.isfragjob==True and not os.path.isfile(self.key6fname):
-            wholemolidxtofragidx=frag.ConvertFragIdxToWholeIdx(self,self.molstructfname,torlist,rotbndindextofragindexmap,WBOmatrix)
         return param
 
 if __name__ == '__main__':

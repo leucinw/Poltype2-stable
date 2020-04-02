@@ -178,39 +178,24 @@ def gen_peditinfile(poltype,mol):
         lf1neighbsnota=RemoveFromList(poltype,lf1neighbs,atom)
         neighbsnotlf1=RemoveFromList(poltype,atomneighbs,lf1atom)
         lf1neighbsallsameclass=CheckIfAllAtomsSameClass(poltype,lf1neighbs)
-        if val==1 and lf1neighbsallsameclass==True and lf1val==4: # then this is like H in Methane, we want Z-only
-            lf2write[atomidx - 1] = 0
-            lfzerox[atomidx - 1]=True
-            atomtypetospecialtrace[atomidx]=True
-            atomindextoremovedipquadcross[atomidx]=True
-        elif lf1neighbsallsameclass==True and AtLeastOneHeavyNeighb(poltype,atom)==False and val==4: # then this is like carbon in Methane, we want Z-only
-            lf2write[atomidx - 1] = 0
-            lfzerox[atomidx - 1]=True
-            atomindextoremovedipquad[atomidx]=True
-        elif atom.GetAtomicNum()==7 and CheckIfAllAtomsSameClass(poltype,atomneighbs)==True and val==3: # then this is like Ammonia and we can use a trisector here which behaves like Z-only
+        # Ammonia N: trisector 
+        if atom.GetAtomicNum()==7 and CheckIfAllAtomsSameClass(poltype,atomneighbs)==True and val==3: 
             idxtotrisecbool[atomidx]=True
             trisectidxs=[atm.GetIdx() for atm in atomneighbs]
             idxtotrisectidxs[atomidx]=trisectidxs
-            lfzerox[atomidx - 1]=True # need to zero out the x components just like for z-only case
-        elif val==1 and lf1val==3 and lf1neighbsallsameclass==True: # then this is like the H on Ammonia and we can use z-then bisector
+            lfzerox[atomidx - 1]=True 
+
+        # Ammonia H: z-bisector 
+        elif val==1 and lf1val==3 and lf1neighbsallsameclass==True: 
             idxtobisecthenzbool[atomidx]=True
             bisectidxs=[atm.GetIdx() for atm in lf1neighbsnota]
             idxtobisectidxs[atomidx]=bisectidxs
-        elif (atom.IsConnected(lf1atom) and  atom.IsConnected(lf2atom) and symm.get_symm_class(poltype,lf1) == symm.get_symm_class(poltype,lf2)): # then this is like middle propane carbon or oxygen in water
-            poltype.localframe2[atomidx - 1] *= -1 #for bisector you just make the index have a negative number, it can be both lfa1,lfa2 negative or just one of them
-            lf2write[atomidx - 1] *= -1
-        elif (atom.IsConnected(lf1atom) and symm.get_symm_class(poltype,lf1) == symm.get_symm_class(poltype,atomidx)): # this handles, ethane,ethene...., z-only
+        # Analine, CH3PO3: z-only-trisector
+        elif CheckIfAllAtomsSameClass(poltype,atomneighbs)==False and CheckIfAllAtomsSameClass(poltype,lf1neighbsnota)==True and CheckIfAllAtomsSameClass(poltype,neighbsnotlf1)==True and val!=2 and lf1val!=2 and val!=4 and lf1val!=4: 
             lf2write[atomidx - 1] = 0
             lfzerox[atomidx - 1]=True
-        elif CheckIfAllAtomsSameClass(poltype,atomneighbs)==False and CheckIfAllAtomsSameClass(poltype,lf1neighbsnota)==True and CheckIfAllAtomsSameClass(poltype,neighbsnotlf1)==True and val!=2 and lf1val!=2 and val!=4 and lf1val!=4: # then this is like CH3PO3, we want z-onlytrisector would also work, also handles Analine
-            lf2write[atomidx - 1] = 0
-            lfzerox[atomidx - 1]=True
-        elif CheckIfAllAtomsSameClass(poltype,neighbsnotlf1)==True and CheckIfAllAtomsSameClass(poltype,lf1neighbsnota)==False and AtLeastOneHeavyNeighbNotA(poltype,lf1atom,atom)==True: # then we can use z-then-x for lf1 and the heavy atom neighbor
-            heavyatomidx=GrabHeavyAtomIdx(poltype,lf1atom,atom)
-            lf2write[atomidx - 1] = heavyatomidx
-        elif CheckIfAllAtomsSameClass(poltype,neighbsnotlf1)==True and CheckIfAllAtomsSameClass(poltype,atomneighbs)==False and lf1atom.GetValence()==2: # then we can still use z-then-x 
-            lf2write[atomidx - 1] = lf1neighbsnota[0].GetIdx() # there is only one atom in this list
-        elif CheckIfAllAtomsSameClass(poltype,atomneighbs)==False and CheckIfAllAtomsSameClass(poltype,neighbsnotlf1)==True and CheckIfAllAtomsSameClass(poltype,lf1neighbsnota)==True and lf1val==3 and val!=1: # then this is like methyl-amine and we can use the two atoms with same symmetry class to do a z-then-bisector
+        # Methylamine: z-bisector
+        elif CheckIfAllAtomsSameClass(poltype,atomneighbs)==False and CheckIfAllAtomsSameClass(poltype,neighbsnotlf1)==True and CheckIfAllAtomsSameClass(poltype,lf1neighbsnota)==True and lf1val==3 and val!=1: 
             idxtobisecthenzbool[atomidx]=True
             bisectidxs=[atm.GetIdx() for atm in lf1neighbsnota]
             idxtobisectidxs[atomidx]=bisectidxs
@@ -218,8 +203,6 @@ def gen_peditinfile(poltype,mol):
             poltype.localframe1[lf1-1]=atomidx
             idxtobisecthenzbool[lf1]=True
             idxtobisectidxs[lf1]=bisectidxs
-
-                
     # write out the local frames
     iteratom = openbabel.OBMolAtomIter(mol)
     if not os.path.isfile(poltype.peditinfile):
@@ -234,11 +217,8 @@ def gen_peditinfile(poltype,mol):
                 trisecidxs=idxtotrisectidxs[a.GetIdx()]
                 f.write(str(a.GetIdx()) + " -" + str(trisecidxs[0])+ " -" + str(trisecidxs[1]) + " -" + str(trisecidxs[2])+ "\n")
     
-
-    
         f.write("\n")
-        if poltype.doamoebaplus==False:
-           f.write('A'+'\n')
+        f.write('A'+'\n')
 
         #Find aromatic carbon, halogens, and bonded hydrogens to correct polarizability
         iteratom = openbabel.OBMolAtomIter(mol)
@@ -274,9 +254,9 @@ def gen_peditinfile(poltype,mol):
         for ia in sp.GetMapList():
             f.write(str(ia[0]) + " " + str(0.921) + "\n")
 
-           
-
         f.write("\n")
+        f.flush()
+        os.fsync(f.fileno())
         #Define polarizable groups by cutting bonds
         iterbond = openbabel.OBMolBondIter(mol)
         for b in iterbond:
@@ -297,11 +277,8 @@ def gen_peditinfile(poltype,mol):
                 if (cut_bond):
                     f.write( str(b.GetBeginAtomIdx()) + " " + str(b.GetEndAtomIdx()) + "\n")
 
-        #f.write('\n')
         f.write('\n')
-        f.write("N\n")
-        if poltype.doamoebaplus==True:
-            f.write("N\n")
+        f.write("Y\n")
         f.close()
     return lfzerox,atomindextoremovedipquad,atomtypetospecialtrace,atomindextoremovedipquadcross
 
@@ -573,7 +550,7 @@ def prepend_keyfile(poltype,keyfilename,optmol,dipole=False):
         logname=poltype.logespfname.replace('.log','_psi4.log')
     if dipole==True:
         qmdipole=esp.GrabQMDipoles(poltype,optmol,logname)
-        tmpfh.write('TARGET-DIPOLE'+' '+str(qmdipole[0])+' '+str(qmdipole[1])+' '+str(qmdipole[2])+'\n')
+        #tmpfh.write('TARGET-DIPOLE'+' '+str(qmdipole[0])+' '+str(qmdipole[1])+' '+str(qmdipole[2])+'\n')
     
     for line in keyfh:
         tmpfh.write(line)
@@ -699,7 +676,6 @@ def gen_avgmpole_groups_file(poltype):
     f = open(poltype.grpfname,"w")
     symgroups.sort()
     for ii in symgroups:
-        #print(ii)
         for kk in ii:
             f.write(str(kk) + " " )
         f.write("\n")

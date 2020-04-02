@@ -1548,9 +1548,10 @@ class Valence():
         vals.append(angparamvals3)
         vals.append(angparamvals2)
         vals.append(angparamvals1)
-        shoulduseanglep = False
-        if self.versionnum>=8.7:
-            shoulduseanglep = True
+        shoulduseanglep = False 
+        # this should be True because we are using 8.7 for sim!
+        #if self.versionnum>=8.7:
+        #    shoulduseanglep = True
 
 
 
