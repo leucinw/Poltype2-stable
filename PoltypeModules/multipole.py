@@ -208,15 +208,15 @@ def gen_peditinfile(poltype,mol):
     if not os.path.isfile(poltype.peditinfile):
         f = open (poltype.peditinfile, 'w')
         for a in iteratom:
-            if idxtobisecthenzbool[a.GetIdx()]==False and idxtotrisecbool[a.GetIdx()]==False:
-                f.write(str(a.GetIdx()) + " " + str(poltype.localframe1[a.GetIdx() - 1]) + " " + str(lf2write[a.GetIdx() - 1]) + "\n")
-            elif idxtobisecthenzbool[a.GetIdx()]==True and idxtotrisecbool[a.GetIdx()]==False:
+            #if idxtobisecthenzbool[a.GetIdx()]==False and idxtotrisecbool[a.GetIdx()]==False:
+            #    f.write(str(a.GetIdx()) + " " + str(poltype.localframe1[a.GetIdx() - 1]) + " " + str(lf2write[a.GetIdx() - 1]) + "\n")
+            #elif idxtobisecthenzbool[a.GetIdx()]==True and idxtotrisecbool[a.GetIdx()]==False:
+            if idxtobisecthenzbool[a.GetIdx()]==True and idxtotrisecbool[a.GetIdx()]==False:
                 bisectidxs=idxtobisectidxs[a.GetIdx()]
                 f.write(str(a.GetIdx()) + " " + str(poltype.localframe1[a.GetIdx() - 1]) + " -" + str(bisectidxs[0])+ " -" + str(bisectidxs[1]) + "\n")
-            else:
+            if idxtobisecthenzbool[a.GetIdx()]==False and idxtotrisecbool[a.GetIdx()]==True:
                 trisecidxs=idxtotrisectidxs[a.GetIdx()]
                 f.write(str(a.GetIdx()) + " -" + str(trisecidxs[0])+ " -" + str(trisecidxs[1]) + " -" + str(trisecidxs[2])+ "\n")
-    
         f.write("\n")
         f.write('A'+'\n')
 
@@ -277,8 +277,10 @@ def gen_peditinfile(poltype,mol):
                 if (cut_bond):
                     f.write( str(b.GetBeginAtomIdx()) + " " + str(b.GetEndAtomIdx()) + "\n")
 
-        f.write('\n')
-        f.write("Y\n")
+        f.write('\nN\n')
+
+        f.flush()
+        os.fsync(f.fileno())
         f.close()
     return lfzerox,atomindextoremovedipquad,atomtypetospecialtrace,atomindextoremovedipquadcross
 
@@ -456,8 +458,8 @@ For alchol, the quadrupole on O and H should be mannually scaled by 0.6. This on
             scalelist[symm.get_class_number(poltype,atm.GetIdx())].append(None)
             multipole_scale_dict = {}
 
-    multipole_scale_dict['[OH][CX4]'] = [2, 0.6]
-    multipole_scale_dict['[NH2][CX4]'] = [2, 0.75]
+    #multipole_scale_dict['[OH][CX4]'] = [2, 0.6]
+    #multipole_scale_dict['[NH2][CX4]'] = [2, 0.75]
     for (sckey, scval) in multipole_scale_dict.items():
         sp = openbabel.OBSmartsPattern()
         openbabel.OBSmartsPattern.Init(sp,sckey)
@@ -533,6 +535,9 @@ def prepend_keyfile(poltype,keyfilename,optmol,dipole=False):
     """
     Intent: Adds a header to the key file given by 'keyfilename'
     """
+    while not os.path.isfile(keyfilename):
+        time.sleep(5)
+        poltype.WriteToLog('Waiting for '+keyfilename)
     tmpfname = keyfilename + "_tmp"
     tmpfh = open(tmpfname, "w")
     keyfh = open(keyfilename, "r")
@@ -638,15 +643,14 @@ def run_gdma(poltype):
     if not os.path.isfile(poltype.fckdmafname):
         poltype.fckdmafname = os.path.splitext(poltype.fckdmafname)[0]
 
-    assert os.path.isfile(poltype.fckdmafname), "Error: " + poltype.fckdmafname + " does not exist."
+    assert os.path.isfile(poltype.fckdmafname), "Error: " + poltype.fckdmafname + " does not exist."+' '+os.getcwd()
     poltype.gdmainfname = poltype.assign_filenames ( "gdmainfname" , ".gdmain")
     gen_gdmain(poltype,poltype.gdmainfname,poltype.molecprefix,poltype.fckdmafname,poltype.dmamethod)
 
     cmdstr = poltype.gdmaexe + " < " + poltype.gdmainfname + " > " + poltype.gdmafname
     poltype.call_subsystem(cmdstr,True)
 
-    assert os.path.getsize(poltype.gdmafname) > 0, "Error: " + \
-       os.path.basename(poltype.gdmaexe) + " cannot create .gdmaout file."
+    assert os.path.getsize(poltype.gdmafname) > 0, "Error: " + os.getcwd() +' '+os.path.basename(poltype.gdmaexe) + " cannot create .gdmaout file."
 
 def AverageMultipoles(poltype,optmol):
     # gen input file
