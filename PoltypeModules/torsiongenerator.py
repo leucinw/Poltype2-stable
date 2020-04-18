@@ -377,7 +377,7 @@ def get_torlist(poltype,mol):
     rotbndlist = {}
 
     iterbond = openbabel.OBMolBondIter(mol)
-    v1 = valence.Valence(poltype.versionnum,poltype.logfname)
+    v1 = valence.Valence(poltype.logfname)
     idxtoclass = []
     for i in range(mol.NumAtoms()):
         idxtoclass.append(i+1)

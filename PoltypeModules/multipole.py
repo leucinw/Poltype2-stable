@@ -178,47 +178,12 @@ def gen_peditinfile(poltype,mol):
         lf1neighbsnota=RemoveFromList(poltype,lf1neighbs,atom)
         neighbsnotlf1=RemoveFromList(poltype,atomneighbs,lf1atom)
         lf1neighbsallsameclass=CheckIfAllAtomsSameClass(poltype,lf1neighbs)
-        # Ammonia N: trisector 
-        if atom.GetAtomicNum()==7 and CheckIfAllAtomsSameClass(poltype,atomneighbs)==True and val==3: 
-            idxtotrisecbool[atomidx]=True
-            trisectidxs=[atm.GetIdx() for atm in atomneighbs]
-            idxtotrisectidxs[atomidx]=trisectidxs
-            lfzerox[atomidx - 1]=True 
-
-        # Ammonia H: z-bisector 
-        elif val==1 and lf1val==3 and lf1neighbsallsameclass==True: 
-            idxtobisecthenzbool[atomidx]=True
-            bisectidxs=[atm.GetIdx() for atm in lf1neighbsnota]
-            idxtobisectidxs[atomidx]=bisectidxs
-        # Analine, CH3PO3: z-only-trisector
-        elif CheckIfAllAtomsSameClass(poltype,atomneighbs)==False and CheckIfAllAtomsSameClass(poltype,lf1neighbsnota)==True and CheckIfAllAtomsSameClass(poltype,neighbsnotlf1)==True and val!=2 and lf1val!=2 and val!=4 and lf1val!=4: 
-            lf2write[atomidx - 1] = 0
-            lfzerox[atomidx - 1]=True
-        # Methylamine: z-bisector
-        elif CheckIfAllAtomsSameClass(poltype,atomneighbs)==False and CheckIfAllAtomsSameClass(poltype,neighbsnotlf1)==True and CheckIfAllAtomsSameClass(poltype,lf1neighbsnota)==True and lf1val==3 and val!=1: 
-            idxtobisecthenzbool[atomidx]=True
-            bisectidxs=[atm.GetIdx() for atm in lf1neighbsnota]
-            idxtobisectidxs[atomidx]=bisectidxs
-            # now make sure neighboring atom (lf1) also is using z-then-bisector
-            poltype.localframe1[lf1-1]=atomidx
-            idxtobisecthenzbool[lf1]=True
-            idxtobisectidxs[lf1]=bisectidxs
     # write out the local frames
     iteratom = openbabel.OBMolAtomIter(mol)
     if not os.path.isfile(poltype.peditinfile):
         f = open (poltype.peditinfile, 'w')
-        for a in iteratom:
-            #if idxtobisecthenzbool[a.GetIdx()]==False and idxtotrisecbool[a.GetIdx()]==False:
-            #    f.write(str(a.GetIdx()) + " " + str(poltype.localframe1[a.GetIdx() - 1]) + " " + str(lf2write[a.GetIdx() - 1]) + "\n")
-            #elif idxtobisecthenzbool[a.GetIdx()]==True and idxtotrisecbool[a.GetIdx()]==False:
-            if idxtobisecthenzbool[a.GetIdx()]==True and idxtotrisecbool[a.GetIdx()]==False:
-                bisectidxs=idxtobisectidxs[a.GetIdx()]
-                f.write(str(a.GetIdx()) + " " + str(poltype.localframe1[a.GetIdx() - 1]) + " -" + str(bisectidxs[0])+ " -" + str(bisectidxs[1]) + "\n")
-            if idxtobisecthenzbool[a.GetIdx()]==False and idxtotrisecbool[a.GetIdx()]==True:
-                trisecidxs=idxtotrisectidxs[a.GetIdx()]
-                f.write(str(a.GetIdx()) + " -" + str(trisecidxs[0])+ " -" + str(trisecidxs[1]) + " -" + str(trisecidxs[2])+ "\n")
         f.write("\n")
-        f.write('A'+'\n')
+        f.write('A\n')
 
         #Find aromatic carbon, halogens, and bonded hydrogens to correct polarizability
         iteratom = openbabel.OBMolAtomIter(mol)
@@ -277,7 +242,8 @@ def gen_peditinfile(poltype,mol):
                 if (cut_bond):
                     f.write( str(b.GetBeginAtomIdx()) + " " + str(b.GetEndAtomIdx()) + "\n")
 
-        f.write('\nN\n')
+        f.write("\nN\n")
+        f.write("\nN\n")
 
         f.flush()
         os.fsync(f.fileno())

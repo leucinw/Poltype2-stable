@@ -371,26 +371,6 @@ class PolarizableTyper():
                     print("ERROR: Cannot find Gaussian executable in $PATH. Please install Gaussian or specify Gaussian directory with --gbindir flag.")
                     sys.exit(1)
     
-    
-        cmdstr=self.analyzeexe+' '+self.poltypepath+r'/'+'water.xyz'+' '+'-k'+' '+self.poltypepath+r'/'+'water.key'+' '+'e'+'>'+' '+'version.out'
-        try:
-            if self.printoutput==True:
-                print('Calling: '+cmdstr) 
-            returned_value = subprocess.call(cmdstr, shell=True)
-        except:
-            pass
-        results = open('version.out').readlines()
-        latestversion = False
-        for line in results:
-            if "Version" in line:
-                linesplit=line.split()
-                self.versionnum=float(linesplit[2])
-                if self.versionnum>=8.7:
-                    latestversion = True
-                    break
-        if(not latestversion):
-            print("Notice: Not latest version of tinker (>=8.7)")
-      
         if ("TINKERDIR" in os.environ):
             self.tinkerdir = os.environ["TINKERDIR"]
             self.peditexe = os.path.join(tinkerdir,self.peditexe)
@@ -601,10 +581,10 @@ class PolarizableTyper():
         self.mol=self.CheckIsInput2D(self.mol,obConversion)
     
         self.totalcharge=self.mol.GetTotalCharge()
-        if self.totalcharge!=0:
-            self.toroptpcm=True
-            self.optpcm=True
-            self.torsppcm=True
+        #if self.totalcharge!=0:
+        #    self.toroptpcm=True
+        #    self.optpcm=True
+        #    self.torsppcm=True
 
      
         self.WriteToLog("Running on host: " + gethostname())
@@ -705,13 +685,13 @@ class PolarizableTyper():
             idxtoclass=[]
             for i in range(mol.NumAtoms()):
                 idxtoclass.append(symm.get_class_number(self,i+1))
-            v = valence.Valence(self.versionnum,self.logfname)
+            v = valence.Valence(self.logfname)
             v.setidxtoclass(idxtoclass)
             dorot = True
             # valence.py method is called to find parameters and append them to the keyfile
             v.appendtofile(self.key4fname, optmol, dorot,self.rotbndlist)
-            if self.totalcharge!=0:
-                torgen.PrependStringToKeyfile(self,self.key4fname,'solvate GK')
+            #if self.totalcharge!=0:
+            #    torgen.PrependStringToKeyfile(self,self.key4fname,'solvate GK')
         if self.isfragjob==False and not os.path.isfile(self.key5fname) and self.dontfrag==False:
 
             self.rdkitmol=rdmolfiles.MolFromMolFile(self.molstructfnamemol,sanitize=True,removeHs=False)
@@ -751,8 +731,8 @@ class PolarizableTyper():
         opt.StructureMinimization(self)
         opt.gen_superposeinfile(self)
         opt.CheckRMSD(self)
-        if self.totalcharge!=0:
-            torgen.RemoveStringFromKeyfile(self,self.key5fname,'solvate GK')
+        #if self.totalcharge!=0:
+        #    torgen.RemoveStringFromKeyfile(self,self.key5fname,'solvate GK')
         esp.CheckDipoleMoments(self,optmol)
         self.WriteToLog('Poltype Job Finished'+'\n')
         keyfilecopyname=self.key5fname.replace('.key','_copy.key')

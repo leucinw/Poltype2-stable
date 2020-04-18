@@ -32,10 +32,9 @@ import os
 radian = 57.29577951308232088
 
 class Valence():
-    def __init__(self,versionnum,logfname):
+    def __init__(self,logfname):
         self.sp = openbabel.OBSmartsPattern()
         self.missed_torsions = []
-        self.versionnum=versionnum
         self.logfh = open(logfname,"a")
         self.defopbendval = 0.20016677990819662
 
@@ -1548,12 +1547,7 @@ class Valence():
         vals.append(angparamvals3)
         vals.append(angparamvals2)
         vals.append(angparamvals1)
-        shoulduseanglep = False 
-        # this should be True because we are using 8.7 for sim!
-        #if self.versionnum>=8.7:
-        #    shoulduseanglep = True
-
-
+        shoulduseanglep = True 
 
         d = dict()
         for v in vals:
@@ -1572,6 +1566,7 @@ class Valence():
                     if b.GetHyb()==2 and shoulduseanglep==True: # only for SP2 hyb middle atoms use angp
                         if b.IsInRing() and b.IsAromatic() and b.GetValence()==3:
                             key2 = 'anglep%8d%6d%6d%11.4f%10.4f' % (key1[0], key1[1], key1[2], v[skey][0], angle)
+                            key2 += '\n#angle%8d%6d%6d%11.4f%10.4f' % (key1[0], key1[1], key1[2], v[skey][0], angle)
                         else:
                             key2 = 'angle%8d%6d%6d%11.4f%10.4f' % (key1[0], key1[1], key1[2], v[skey][0], angle)
               
