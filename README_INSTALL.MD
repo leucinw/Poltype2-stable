@@ -5,8 +5,7 @@ Make sure to download the ZIP folder from the poltype2 branch, NOT the master br
 
 ```https://github.com/pren/poltype/tree/poltype2 ```
 
-Or simply using the following git command
-
+* Or simply using the following git command
 ```shell
 git clone git@github.com:pren/poltype.git --branch poltype2
 ```

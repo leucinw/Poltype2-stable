@@ -1,7 +1,5 @@
-
-# Help infomation
-
-## RUNNING POLTYPE
+## Help
+### RUNNING POLTYPE
 * Need two input files to run: \*.ini and \*.sdf. The ini file sets poltype controls and it specifies the molecule in sdf format to be used.
 * Prepare the poltype.ini and sdf file as shown below
 * Navigate to directory containing poltype.ini and .sdf file, and run:
@@ -12,14 +10,13 @@ python /path_to_poltype/poltype.py
 
 ```ttt.xyz``` and ```ttt.key``` are the resulting structure and parameter files you will need.
 
-
-## HELP
+### HELP
 
 ```shell
 python /path_to_poltype/poltype.py --help
 ```
 
-## Unittesting
+### Unittesting
 ```shell
 python ~/poltypepackage/PoltypeModules/test_poltype.py
 python ~/poltypepackage/PoltypeModules/test_poltype.py --method=test_Fragmenter --examplepath=/home/bdw2292/PoltypeJobs/MOLECULE0DontFrag
@@ -30,7 +27,7 @@ In order to test the fragmenter, run POLTYPE with fragmenting option turned off(
 
 
 
-## Input Structure - SDF File
+### Input Structure - SDF File
 
 After the bond block, you can specify formal charge. Just put the total charge on one atom.
 
@@ -40,7 +37,7 @@ For 0 total charge, you do not need to specify CHG line
 
 M  CHG  1   2   1
 
-### Most Common Inputs
+#### Most Common Inputs
 
 ```
 structure         specifies input structure for poltype, must include total charge information. 
@@ -53,7 +50,7 @@ maxdisk           specifies max scratch space used for running quantum jobs.
                   Default=100GB
 ```
 
-### Most Common Input Example
+#### Most Common Input Example
 
 __All input arguments are specified in poltype.ini file__
 
@@ -165,19 +162,19 @@ atmidx   specifies which number to start poltype type numbers from.
          Default=401
 ```
 
-## Minimal Example
+### Minimal Example
 Minimal examples are any example folder in Examples/, that contain Symmetry as the first word. Minimal meaning just specifying the structure input file.
 
-## FAQ
+### FAQ
 *********************************************
 * Q) If I want to change QM methods/basis set do I need to restart POLTYPE job from scratch?
 
   A) No, POLTYPE will look for output files from QM (see README.MANIFEST) to see if it needs to perform a job or continue. So you can delete the outputlog file, change your input options and resubmit POLTYPE job.
 
-## Tips
+### Tips
 If using PSI4 for optimization, it will be much slower than Gaussian optimization. Add keyword "use_gaus" in poltype.ini file.
 
-## Common Errors
+### Common Errors
 
 If QM and MM molecular dipole moments are too different, a ValueError will be raised.
 
@@ -195,7 +192,7 @@ If POLTYPE crashes, you do not need to delete any quantum data or tinker data, P
 
 
 
-## Less Common Errors
+### Less Common Errors
 If your RMSPD is too high and also you have a molecule of high symmetry, please check frame definitions and alter them as needed using POLEDIT and POTENTIAL command in Tinker to change frames/combine multipoles and refit to electrostatic potential. See Symmetry examples under Examples folder. We believe all symmetry cases are already covered by POLTYPE.
 
 If you are concerned with vdw parameters, you may check again QM dimer (your_molecule-water) structure and energy.
