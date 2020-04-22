@@ -1,4 +1,4 @@
-## READMEs
+## Readmes 
 
 --- | --- |
 README_INSTALL | How to install POLTYPE and dependencies |

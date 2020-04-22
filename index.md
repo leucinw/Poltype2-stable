@@ -1,5 +1,5 @@
 
-This is an intermediate (stable) version of Poltype2 maintained by Chengwen Liu. For the latest version, please [click here](https://github.com/pren/poltype/tree/poltype2)
+For the latest version, please [click here](https://github.com/pren/poltype/tree/poltype2)
 
 ## Documentation
 * [Help](https://github.com/leucinw/Poltype2-stable/blob/gh-pages/README_HELP.MD)

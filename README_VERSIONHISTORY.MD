@@ -1,4 +1,5 @@
 ## Version history
+
 2.0.0
 *     Poltype is modularized for code organization.
 *     Unittesting is available for maintaining code robustness.

@@ -1,4 +1,10 @@
-## POLTYPE Files
+## Manifest
+
+[Poltype Files](#poltype-files)
+[Poltype Modules](#poltype-modules)
+[Poltype Examples](#poltype-examples)
+
+### POLTYPE Files
 
 ```
 *.sdf               Input structure file.
@@ -103,7 +109,7 @@ qm-torsion
 *-energy-b-c.png                                 Plot of MM1 (prefit),MM2 (postfit),QM and MM1+Fit as a function of                                                         dihedral angle.
 ```
 
-## Poltype Modules
+### Poltype Modules
 ```
 symmetry.py                Handles detecting symmetry in input molecule.
 modifiedresidues.py        Handles parameterizing new amino acid side chains and stitching parameters from amoebabio18.prm for                        parts of molecule already parameterized.
@@ -119,7 +125,7 @@ fragmenter.py              Handles fragmenting parent molecule, paramterizing to
 test_poltype.py            Handles unittesting for POLTYPE modules.
 ```
 
-Examples
+### Examples
 ```
 ExternalAPIExample                      Example Daemon for jub submission to be used with externalapi command
                                         and bashrcpath command.
