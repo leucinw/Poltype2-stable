@@ -1,8 +1,8 @@
 ## Manifest
 
-[Poltype Files](#poltype-files)
-[Poltype Modules](#poltype-modules)
-[Poltype Examples](#poltype-examples)
+* [Poltype Files](#poltype-files)
+* [Poltype Modules](#poltype-modules)
+* [Poltype Examples](#poltype-examples)
 
 ### POLTYPE Files
 
