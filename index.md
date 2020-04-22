@@ -2,8 +2,8 @@
 This is an intermediate (stable) version of Poltype2 maintained by Chengwen Liu. For the latest version, please [click here](https://github.com/pren/poltype/tree/poltype2)
 
 ## Documentation
-* [Help](https://github.com/pren/poltype/blob/poltype2/README.HELP)
-* [Install](https://github.com/pren/poltype/blob/poltype2/README.INSTALL)
-* [Manifest](https://github.com/pren/poltype/blob/poltype2/README.MANIFEST)
-* [Version](https://github.com/pren/poltype/blob/poltype2/README.VERSION)
-* [VersionHistory](https://github.com/pren/poltype/blob/poltype2/README.VERSIONHISTORY)
+* [Help](https://github.com/leucinw/Poltype2-stable/blob/gh-pages/README_HELP.MD)
+* [Install](https://github.com/leucinw/Poltype2-stable/blob/gh-pages/README_INSTALL.MD)
+* [Manifest](https://github.com/leucinw/Poltype2-stable/blob/gh-pages/README_MANIFEST.MD)
+* [Version](https://github.com/leucinw/Poltype2-stable/blob/gh-pages/README_VERSION.MD)
+* [VersionHistory](https://github.com/leucinw/Poltype2-stable/blob/gh-pages/README_VERSIONHISTORY.MD)
