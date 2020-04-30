@@ -125,7 +125,7 @@ fragmenter.py              Handles fragmenting parent molecule, paramterizing to
 test_poltype.py            Handles unittesting for POLTYPE modules.
 ```
 
-### Examples
+### Poltype Examples
 ```
 ExternalAPIExample                      Example Daemon for jub submission to be used with externalapi command
                                         and bashrcpath command.
